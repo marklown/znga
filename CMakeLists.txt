@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 project(znga)
 
-file(GLOB SRC "src/*.cpp")
+file(GLOB SRC "source/*.cpp")
 
-include_directories(inc)
+include_directories(include)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)

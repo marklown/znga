@@ -56,7 +56,6 @@ int main(int argc, char* argv[])
     glfwSetKeyCallback(window, key_callback);
 
     glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
-    //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     znga_cube_t cube = znga_create_cube();
     znga_shader_t shader = znga_create_shader(
@@ -77,7 +76,7 @@ int main(int argc, char* argv[])
     mat4x4_rotate_X(model, model, 35.0f * 3.14f / 180.f);
     mat4x4_rotate_Y(model, model, 45.0f * 3.14f / 180.f);
 
-    znga_light_t light = {{-1.0f, 0.0f, 3.0f}, {1.f, 1.f, 1.f}};
+    znga_light_t light = {{0.0f, 3.0f, 2.0f}, {1.f, 1.f, 1.f}};
     vec4 color = {0.5f, 0.5f, 0.5f, 1.0f};
 
     int projection_loc = glGetUniformLocation(shader, "u_projection");
@@ -102,8 +101,6 @@ int main(int argc, char* argv[])
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //light.position[0] += 0.005;
-        //glUniform3fv(light_position_loc, 1, (GLfloat*)light.position);
         mat4x4_rotate_Y(model, model, 0.005f * 45.0f * 3.14f / 180.f);
         mat4x4_rotate_X(model, model, 0.005f * 45.0f * 3.14f / 180.f);
         mat4x4_rotate_Z(model, model, 0.005f * 45.0f * 3.14f / 180.f);

@@ -68,4 +68,9 @@ znga_shader_t znga_create_shader(const std::string& vpath, const std::string& fp
     return program;
 }
 
+GLint znga_get_uniform_loc(znga_shader_t shader, const char* uniform)
+{
+    return glGetUniformLocation(shader, uniform);
+}
+
 #endif
