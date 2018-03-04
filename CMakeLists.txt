@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.9)
 project(znga)
 
+set (CMAKE_CXX_STANDARD 11)
+
 file(GLOB SRC "source/*.cpp")
 
 include_directories(include)

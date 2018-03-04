@@ -16,8 +16,7 @@ znga_mesh_t znga_create_mesh(znga_vertex_t vertices[], GLuint num_vertices,
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
     glBufferData(GL_ARRAY_BUFFER, num_vertices * sizeof(znga_vertex_t), &vertices[0], GL_STATIC_DRAW);
 
-    if (num_indices > 0)
-    {
+    if (num_indices > 0) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
     }
