@@ -9,7 +9,8 @@
                 "/Library/Developer/CommandLineTools/usr/include",
                 "/usr/include",
                 "${workspaceRoot}",
-                "${workspaceRoot}/include"
+                "${workspaceRoot}/include",
+                "${workspaceRoot}/assimp-4.1.0/include"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",

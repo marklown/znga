@@ -3,16 +3,21 @@ project(znga)
 
 set (CMAKE_CXX_STANDARD 11)
 
-file(GLOB SRC "source/*.cpp")
-
-include_directories(include)
+file(GLOB SRC "source/*.c")
+file(GLOB INC "include/*.h")
 
 find_package(PkgConfig REQUIRED)
-pkg_search_module(GLFW REQUIRED glfw3)
-include_directories(${GLFW_INCLUDE_DIRS})
-
 find_package(OpenGL REQUIRED)
+find_package(ASSIMP REQUIRED)
 
-add_executable(znga ${SRC})
+pkg_search_module(GLFW REQUIRED glfw3)
 
-target_link_libraries(znga ${OPENGL_LIBRARIES} ${GLFW_STATIC_LIBRARIES})
+include_directories(include)
+include_directories(${GLFW_INCLUDE_DIRS})
+include_directories(${ASSIMP_INCLUDE_DIRS})
+
+link_directories("/usr/local/lib")
+
+add_executable(znga ${SRC} ${INC})
+
+target_link_libraries(znga ${OPENGL_LIBRARIES} ${GLFW_STATIC_LIBRARIES} ${ASSIMP_LIBRARIES})

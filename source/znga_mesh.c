@@ -1,10 +1,12 @@
 
 #include "znga_mesh.h"
 
-znga_mesh_t znga_create_mesh(znga_vertex_t vertices[], GLuint num_vertices,
-                             GLuint indices[], GLuint num_indices)
+znga_mesh_t znga_create_mesh(const znga_vertex_t* vertices, GLuint num_vertices,
+                             const GLuint* indices, GLuint num_indices,
+                             znga_material_t material)
 {
     znga_mesh_t mesh;
+    mesh.material = material;
     mesh.num_vertices = num_vertices;
     mesh.num_indices = num_indices;
 
@@ -16,7 +18,8 @@ znga_mesh_t znga_create_mesh(znga_vertex_t vertices[], GLuint num_vertices,
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
     glBufferData(GL_ARRAY_BUFFER, num_vertices * sizeof(znga_vertex_t), &vertices[0], GL_STATIC_DRAW);
 
-    if (num_indices > 0) {
+    if (num_indices > 0)
+    {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
     }
@@ -40,13 +43,17 @@ znga_mesh_t znga_create_mesh(znga_vertex_t vertices[], GLuint num_vertices,
 
 void znga_draw_mesh(znga_mesh_t* mesh)
 {
-    if (!mesh) {
+    if (!mesh) 
+    {
         return;
     }
     glBindVertexArray(mesh->vao);
-    if (mesh->num_indices > 0) {
+    if (mesh->num_indices > 0)
+    {
         glDrawElements(GL_TRIANGLES, mesh->num_indices, GL_UNSIGNED_INT, 0);
-    } else {
+    }
+    else
+    {
         glDrawArrays(GL_TRIANGLES, 0, mesh->num_vertices);
     }
     glBindVertexArray(0);

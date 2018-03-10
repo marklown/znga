@@ -1,7 +1,7 @@
 #version 330 core
 
 uniform mat4 u_model;
-uniform sampler2D u_tex;
+uniform sampler2D u_diffuse_map;
 uniform sampler2D u_normal_map;
 uniform int u_normal_map_enabled;
 uniform float u_ambient_light_strength;
@@ -19,6 +19,7 @@ uniform vec4 u_color;
 in vec3 pos;
 in vec3 normal;
 in vec2 tex_coord;
+in mat3 TBN;
 
 out vec4 finalColor;
 
@@ -30,9 +31,11 @@ void main()
         if (u_normal_map_enabled == 1) {
             normal = texture(u_normal_map, tex_coord).rgb;
             normal = normalize(normal * 2.0 - 1.0);
+            //normal = normalize(TBN * normal);
         } else {
-            mat3 normal_matrix = transpose(inverse(mat3(u_model)));
-            normal = normalize(normal_matrix * normal);
+            //mat3 normal_matrix = transpose(inverse(mat3(u_model)));
+            //normal = normalize(normal_matrix * normal);
+            normal = normalize(normal);
         }
 
         // calculate the location of this fragment in world coords
@@ -49,13 +52,16 @@ void main()
         // 1. The angle of incidence (brightness)
         // 2. The color of the light
         // 3. The texture and texture coordinates
-        vec4 surface_color = texture(u_tex, tex_coord);
-        //finalColor += vec4(brightness * u_light[i].color, 1) * u_color + u_ambient_light_strength * u_color;
-        finalColor += vec4((brightness * u_light[i].color + u_ambient_light_strength * vec3(1.0f, 1.0f, 1.0f))
-            * surface_color.rgb, surface_color.a);
+        //vec4 surface_color = texture(u_diffuse_map, tex_coord);
+        vec4 surface_color = u_color;
+        finalColor += vec4(brightness * u_light[i].color, 1) * u_color + u_ambient_light_strength * u_color;
+        //finalColor += vec4((brightness * u_light[i].color + u_ambient_light_strength * vec3(1.0f, 1.0f, 1.0f))
+        //    * surface_color.rgb, surface_color.a);
+        //finalColor = (u_ambient_light_strength + brightness) * vec4(surface_color.rgb, surface_color.a) +
+        //             (u_ambient_light_strength) * u_color;
     }
     if (u_num_lights == 0) {
-        vec4 surface_color = texture(u_tex, tex_coord);
+        vec4 surface_color = texture(u_diffuse_map, tex_coord);
         finalColor = vec4(surface_color.rgb, surface_color.a);
     }
 }
