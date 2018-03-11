@@ -8,12 +8,23 @@
 #include "znga_cube.h"
 #include "znga_model.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
-typedef struct znga_light_t
-{
-    vec3 position;
-    vec3 color;
-} znga_light_t;
+// time
+float time_delta = 0.0f;
+float time_last = 0.0f;
+
+// camera system
+vec3 camera_pos = {0.0f, 0.0f, 10.0f};
+vec3 camera_front = {0.0f, 0.0f, -1.0f};
+vec3 camera_up = {0.0f, 1.0f, 0.0f};
+float camera_last_x = 1920.0f / 2.0f;
+float camera_last_y = 1080.0f / 2.0f;
+float camera_yaw = -90.0f;
+float camera_pitch = 0.0f;
+bool first_mouse = true;
 
 static GLFWwindow* window = NULL;
 
@@ -28,6 +39,75 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
+}
+
+static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos)
+{
+    if (first_mouse)
+    {
+        camera_last_x = x_pos;
+        camera_last_y = y_pos;
+        first_mouse = false;
+    }
+
+    float x_offset = x_pos - camera_last_x;
+    float y_offset = camera_last_y - y_pos;
+    camera_last_x = x_pos;
+    camera_last_y = y_pos;
+
+    float sensitivity = 0.1;
+    x_offset *= sensitivity;
+    y_offset *= sensitivity;
+
+    camera_yaw += x_offset;
+    camera_pitch += y_offset;
+
+    if (camera_pitch > 89.0f)
+    {
+        camera_pitch = 89.0f;
+    }
+    else if (camera_pitch < -89.0f)
+    {
+        camera_pitch = -89.0f;
+    }
+
+    float x = cos(RAD(camera_yaw)) * cos(RAD(camera_pitch));
+    float y = sin(RAD(camera_pitch));
+    float z = sin(RAD(camera_yaw)) * cos(RAD(camera_pitch));
+    vec3 front = {x, y, z};
+    vec3_norm(front, front);
+    memcpy(camera_front, front, sizeof(vec3));
+}
+
+static void process_input(GLFWwindow* window)
+{
+    const float camera_speed = 7.0f * time_delta;
+    vec3 tmp;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        vec3_scale(tmp, camera_front, camera_speed);
+        vec3_add(camera_pos, camera_pos, tmp);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        vec3_scale(tmp, camera_front, camera_speed);
+        vec3_sub(camera_pos, camera_pos, tmp);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        vec3_mul_cross(tmp, camera_front, camera_up);
+        vec3_norm(tmp, tmp);
+        vec3_scale(tmp, tmp, camera_speed);
+        vec3_sub(camera_pos, camera_pos, tmp);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        vec3_mul_cross(tmp, camera_front, camera_up);
+        vec3_norm(tmp, tmp);
+        vec3_scale(tmp, tmp, camera_speed);
+        vec3_add(camera_pos, camera_pos, tmp);
+    }
+
 }
 
 int main(int argc, char* argv[])
@@ -67,104 +147,80 @@ int main(int argc, char* argv[])
 
     glfwSetKeyCallback(window, key_callback);
 
-    glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
-    //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
-    znga_shader_t shader = znga_create_shader(
+    glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
+
+    znga_shader_t shader = znga_shader_create(
         "/Users/markl/Dev/znga/shaders/flat.vert",
         "/Users/markl/Dev/znga/shaders/flat.frag"
     );
 
-    znga_texture_t diffuse_map = znga_create_texture(
-        "/Users/markl/Dev/znga/textures/brickwall.jpg", DIFFUSE_MAP);
+    znga_model_t cube = znga_model_create("/Users/markl/Dev/znga/models/cube.obj");
+    cube.meshes[0].material.shader = shader;
+    vec3 color = {1.0f, 0.5f, 0.31f};
+    memcpy(cube.meshes[0].material.color, color, sizeof(vec3));
 
-    znga_texture_t normal_map = znga_create_texture(
-        "/Users/markl/Dev/znga/textures/brickwall_normal.jpg", NORMAL_MAP);
+    glUseProgram(shader.id);
 
-    znga_material_t material;
-    material.diffuse_map = diffuse_map;
-    material.normal_map = normal_map;
-
-    //znga_mesh_t cube = znga_create_mesh(cube_vertices, 36, 0, 0, material);
-    znga_model_t cube = znga_create_model("/Users/markl/Dev/znga/models/cube.obj");
-
-    glUseProgram(shader);
-
-    mat4x4 projection, model, view;
+    mat4x4 projection, view;
     mat4x4_identity(projection);
-    mat4x4_identity(model);
     mat4x4_identity(view);
 
     mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 100.0f);
     mat4x4_translate(view, 0, 0, -10.0f);
-    mat4x4_translate(model, 0, 0, 0);
-    //mat4x4_rotate_X(model, model, 35.0f * 3.14f / 180.f);
-    mat4x4_rotate_Y(model, model, 25.0f * 3.14f / 180.f);
-    //mat4x4_scale(model, model, .1f);
 
-    znga_light_t light_1 = {{-0.5f, 0.0f, 0.75f}, {1.0f, 0.94f, 0.88f}};
-    vec4 color = {0.5f, 0.5f, 0.5f, 1.0f};
-
-    int projection_loc = glGetUniformLocation(shader, "u_projection");
-    int view_loc = glGetUniformLocation(shader, "u_view");
-    int model_loc = glGetUniformLocation(shader, "u_model");
-
-    int light_pos_loc = glGetUniformLocation(shader, "light_pos");
-    int light_col_loc = glGetUniformLocation(shader, "light_color");
-    int object_col_loc = glGetUniformLocation(shader, "object_color");
-
-//    int diffuse_map_loc = glGetUniformLocation(shader, "u_diffuse_map");
-//    int normal_map_loc = glGetUniformLocation(shader, "u_normal_map");
-//    int num_lights_loc = glGetUniformLocation(shader, "u_num_lights");
-//    int light_1_position_loc = glGetUniformLocation(shader, "u_light[0].position");
-//    int light_1_color_loc = glGetUniformLocation(shader, "u_light[0].color");
-//    int light_ambient_loc = glGetUniformLocation(shader, "u_ambient_light_strength");
-//    int color_loc = glGetUniformLocation(shader, "u_color");
-//    int normal_map_enabled_loc = glGetUniformLocation(shader, "u_normal_map_enabled");
-
-    glUniformMatrix4fv(projection_loc, 1, GL_FALSE, (GLfloat*)projection);
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, (GLfloat*)model);
-    glUniformMatrix4fv(view_loc, 1, GL_FALSE, (GLfloat*)view);
+    // Create a few model instances
+    mat4x4 transform;
+    mat4x4_identity(transform);
+    znga_model_instance_t model_instance_1 = znga_model_create_instance(&cube, transform);
+    mat4x4_translate(transform, 4.0f, 4.0f, 0.0f);
+    znga_model_instance_t model_instance_2 = znga_model_create_instance(&cube, transform);
+    mat4x4_translate(transform, -4.0f, 2.0f, -2.0f);
+    znga_model_instance_t model_instance_3 = znga_model_create_instance(&cube, transform);
 
     vec3 light_pos = {0.0f, 0.0f, 5.0f};
-    vec3 light_col = {.75f, .75f, .75f};
-    vec3 object_col = {1.0f, 0.5f, 0.31f};
+    vec3 light_color = {.75f, .75f, .75f};
 
-    glUniform3fv(light_pos_loc, 1, (GLfloat*)light_pos);
-    glUniform3fv(light_col_loc, 1, (GLfloat*)light_col);
-    glUniform3fv(object_col_loc, 1, (GLfloat*)object_col);
-
-//    glUniform1i(diffuse_map_loc, 0);
-//    glUniform1i(normal_map_loc, 1);
-//    glUniform3fv(light_1_position_loc, 1, (GLfloat*)light_1.position);
-//    glUniform3fv(light_1_color_loc, 1, (GLfloat*)light_1.color);
-//    glUniform1f(light_ambient_loc, 0.075f);
-//    glUniform4fv(color_loc, 1, (GLfloat*)color);
-//    glUniform1i(num_lights_loc, 1);
-//    glUniform1i(normal_map_enabled_loc, 0);
+    znga_shader_set_uniform_mat4(shader.loc_u_projection, (GLfloat*)projection);
+    znga_shader_set_uniform_mat4(shader.loc_u_view, (GLfloat*)view);
+    znga_shader_set_uniform_vec3(shader.loc_u_light_pos, (GLfloat*)light_pos);
+    znga_shader_set_uniform_vec3(shader.loc_u_light_color, (GLfloat*)light_color);
 
     glEnable(GL_DEPTH_TEST);
 
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window))
+    {
+        float time_current = glfwGetTime();
+        time_delta = time_current - time_last;
+        time_last = time_current;
+
+        process_input(window);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        mat4x4_rotate_Y(model, model, 0.005f * 45.0f * 3.14f / 180.f);
-        mat4x4_rotate_X(model, model, 0.005f * 45.0f * 3.14f / 180.f);
-        mat4x4_rotate_Z(model, model, 0.005f * 45.0f * 3.14f / 180.f);
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, (GLfloat*)model);
+        vec3 center;
+        vec3_add(center, camera_pos, camera_front);
+        mat4x4_look_at(view, camera_pos, center , camera_up);
+        znga_shader_set_uniform_mat4(shader.loc_u_view, (GLfloat*)view);
 
-#if 0
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuse_map.id);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, normal_map.id);
-#endif
-
-        znga_draw_mesh(&cube.meshes[0]);
+        mat4x4_rotate_X(model_instance_1.transform,
+                        model_instance_1.transform,
+                        0.01f * RAD(45.0f));
+        mat4x4_rotate_Z(model_instance_2.transform,
+                        model_instance_2.transform,
+                        0.01f * RAD(75.0f));
+        mat4x4_rotate_Y(model_instance_3.transform,
+                        model_instance_3.transform,
+                        0.01f * RAD(15.0f));
+        znga_model_draw_instance(&model_instance_1);
+        znga_model_draw_instance(&model_instance_2);
+        znga_model_draw_instance(&model_instance_3);
 
         GLenum err;
-        while ((err = glGetError()) != GL_NO_ERROR) {
+        while ((err = glGetError()) != GL_NO_ERROR)
+        {
             printf("OpenGL error: %u\n", err);
         }
 
@@ -172,7 +228,7 @@ int main(int argc, char* argv[])
         glfwPollEvents();
     }
 
-    znga_free_model(&cube);
+    znga_model_free(&cube);
 
     glfwDestroyWindow(window);
 

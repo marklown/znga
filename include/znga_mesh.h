@@ -4,6 +4,7 @@
 #include <OpenGL/gl3.h>
 #include "znga_texture.h"
 #include "znga_shader.h"
+#include "linmath.h"
 
 typedef struct znga_material_t
 {
@@ -11,6 +12,7 @@ typedef struct znga_material_t
     znga_texture_t diffuse_map;
     znga_texture_t specular_map;
     znga_texture_t normal_map;
+    vec3 color;
 } znga_material_t;
 
 typedef struct znga_vertex_t
@@ -30,10 +32,10 @@ typedef struct znga_mesh_t
     znga_material_t material;
 } znga_mesh_t;
 
-znga_mesh_t znga_create_mesh(const znga_vertex_t* vertices, GLuint num_vertices,
+znga_mesh_t znga_mesh_create(const znga_vertex_t* vertices, GLuint num_vertices,
                              const GLuint* indices, GLuint num_indices,
                              znga_material_t material);
 
-void znga_draw_mesh(znga_mesh_t* mesh);
+void znga_mesh_draw(znga_mesh_t* mesh);
 
 #endif

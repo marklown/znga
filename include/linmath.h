@@ -3,6 +3,9 @@
 
 #include <math.h>
 
+#define RAD(v) (v * 3.14159f / 180.0f)
+#define DEG(v) (v * 180.0f / 3.13159f)
+
 #define LINMATH_H_DEFINE_VEC(n) \
 typedef float vec##n[n]; \
 static inline void vec##n##_add(vec##n r, vec##n const a, vec##n const b) \

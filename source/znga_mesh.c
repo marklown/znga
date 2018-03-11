@@ -1,7 +1,7 @@
 
 #include "znga_mesh.h"
 
-znga_mesh_t znga_create_mesh(const znga_vertex_t* vertices, GLuint num_vertices,
+znga_mesh_t znga_mesh_create(const znga_vertex_t* vertices, GLuint num_vertices,
                              const GLuint* indices, GLuint num_indices,
                              znga_material_t material)
 {
@@ -41,12 +41,20 @@ znga_mesh_t znga_create_mesh(const znga_vertex_t* vertices, GLuint num_vertices,
     return mesh;
 }
 
-void znga_draw_mesh(znga_mesh_t* mesh)
+void znga_mesh_draw(znga_mesh_t* mesh)
 {
     if (!mesh) 
     {
         return;
     }
+
+    znga_material_t* material = &mesh->material;
+
+    glUseProgram(material->shader.id);
+
+    znga_shader_set_uniform_vec3(material->shader.loc_u_object_color,
+                                 (GLfloat*)material->color);
+
     glBindVertexArray(mesh->vao);
     if (mesh->num_indices > 0)
     {

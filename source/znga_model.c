@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 
-znga_model_t znga_create_model(const char* path)
+znga_model_t znga_model_create(const char* path)
 {
     printf("Loading model: %s\n", path);
 
@@ -62,20 +62,22 @@ znga_model_t znga_create_model(const char* path)
     }
 
     znga_material_t material;
-    znga_mesh_t mesh = znga_create_mesh(vertices, num_vertices, indices, num_indices, material);
+    znga_mesh_t mesh = znga_mesh_create(vertices, num_vertices, indices, num_indices, material);
     free(vertices);
     free(indices);
     
-    model.meshes = malloc(sizeof(znga_mesh_t) * 1);
+    model.num_meshes = 1;
+    model.meshes = malloc(sizeof(znga_mesh_t) * model.num_meshes);
     model.meshes[0] = mesh;
 
+    printf("num_meshes: %u\n", model.num_meshes);
     printf("Loaded model: %s\n", path);
 
     aiReleaseImport(scene);
     return model;
 }
 
-void znga_free_model(znga_model_t* model)
+void znga_model_free(znga_model_t* model)
 {
     if (!model)
     {
@@ -86,4 +88,39 @@ void znga_free_model(znga_model_t* model)
         return;
     }
     free(model->meshes);
+}
+
+void znga_model_draw(znga_model_t* model)
+{
+    if (!model)
+    {
+        return;
+    }
+    for (unsigned int i = 0; i < model->num_meshes; i++)
+    {
+        znga_mesh_draw(&(model->meshes[i]));
+    }
+}
+
+znga_model_instance_t znga_model_create_instance(znga_model_t* model, mat4x4 transform)
+{
+    znga_model_instance_t model_instance;
+    model_instance.model = model;
+    mat4x4_dup(model_instance.transform, transform);
+    return model_instance;
+}
+
+void znga_model_draw_instance(znga_model_instance_t* model_instance)
+{
+    if (!model_instance || !model_instance->model)
+    {
+        return;
+    }
+
+    znga_model_t* model = model_instance->model;
+
+    znga_shader_set_uniform_mat4(model->meshes[0].material.shader.loc_u_model,
+                                 (GLfloat*)model_instance->transform);
+
+    znga_model_draw(model);
 }

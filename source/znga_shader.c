@@ -25,9 +25,9 @@ const char* znga_read_file(const char* path)
     return buffer;
 }
 
-znga_shader_t znga_create_shader(const char* vpath, const char* fpath)
+znga_shader_t znga_shader_create(const char* vpath, const char* fpath)
 {
-    znga_shader_t program, vertex_shader, fragment_shader;
+    GLuint program, vertex_shader, fragment_shader;
     GLint success;
     char info_log[512];
 
@@ -66,5 +66,24 @@ znga_shader_t znga_create_shader(const char* vpath, const char* fpath)
     free((char*)vertex_shader_src);
     free((char*)fragment_shader_src);
 
-    return program;
+    znga_shader_t shader;
+    shader.id = program;
+    shader.loc_u_model = glGetUniformLocation(program, "u_model");
+    shader.loc_u_view = glGetUniformLocation(program, "u_view");
+    shader.loc_u_projection = glGetUniformLocation(program, "u_projection");
+    shader.loc_u_light_pos = glGetUniformLocation(program, "light_pos");
+    shader.loc_u_light_color = glGetUniformLocation(program, "light_color");
+    shader.loc_u_object_color = glGetUniformLocation(program, "object_color");
+
+    return shader;
+}
+
+void znga_shader_set_uniform_mat4(GLuint location, GLfloat* values)
+{
+    glUniformMatrix4fv(location, 1, GL_FALSE, values);
+}
+
+void znga_shader_set_uniform_vec3(GLuint location, GLfloat* values)
+{
+    glUniform3fv(location, 1, values);
 }

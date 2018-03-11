@@ -13,6 +13,6 @@ typedef struct znga_texture_t
     uint8_t type;
 } znga_texture_t;
 
-znga_texture_t znga_create_texture(const char* path, uint8_t type);
+znga_texture_t znga_texture_create(const char* path, uint8_t type);
 
 #endif
