@@ -7,6 +7,7 @@
 #include "znga_mesh.h"
 #include "znga_cube.h"
 #include "znga_model.h"
+#include "znga_terrain.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +27,10 @@ float camera_yaw = -90.0f;
 float camera_pitch = 0.0f;
 bool first_mouse = true;
 
+bool fill_mode_line = false;
+
+extern float* terrain_height;
+
 static GLFWwindow* window = NULL;
 
 static void glfw_error_callback(int error, const char* desc)
@@ -38,6 +43,20 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+
+    if (key == GLFW_KEY_F && action == GLFW_PRESS)
+    {
+        if (!fill_mode_line)
+        {
+            fill_mode_line = true;
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        else 
+        {
+            fill_mode_line = false;
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
     }
 }
 
@@ -108,6 +127,10 @@ static void process_input(GLFWwindow* window)
         vec3_add(camera_pos, camera_pos, tmp);
     }
 
+    float x = camera_pos[0];
+    float z = camera_pos[2];
+    float y = terrain_height[(int)x * 256 + (int)z] + 1;
+    camera_pos[1] = y;
 }
 
 int main(int argc, char* argv[])
@@ -174,18 +197,29 @@ int main(int argc, char* argv[])
     // Create a few model instances
     mat4x4 transform;
     mat4x4_identity(transform);
+    mat4x4_translate(transform, 32.0f, 6.0f, 32.0f);
     znga_model_instance_t model_instance_1 = znga_model_create_instance(&cube, transform);
-    mat4x4_translate(transform, 4.0f, 4.0f, 0.0f);
+    mat4x4_translate(transform, 38.0f, 4.0f, 38.0f);
     znga_model_instance_t model_instance_2 = znga_model_create_instance(&cube, transform);
-    mat4x4_translate(transform, -4.0f, 2.0f, -2.0f);
+    mat4x4_translate(transform, 42.0f, 2.0f, 42.0f);
     znga_model_instance_t model_instance_3 = znga_model_create_instance(&cube, transform);
 
-    vec3 light_pos = {0.0f, 0.0f, 5.0f};
+    // Setup the light
+    vec3 light_dir = {0.0f, -1.0f, -1.0f};
     vec3 light_color = {.75f, .75f, .75f};
+
+    // Terrain
+    const unsigned int terrain_size = 256;
+    znga_mesh_t terrain_mesh = znga_terrain_create(terrain_size);
+    terrain_mesh.material.shader = shader;
+    mat4x4 terrain_transform;
+    mat4x4_identity(terrain_transform);
+    //mat4x4_translate(terrain_transform, -64.0f, -4.0f, -128);
+    znga_mesh_instance_t terrain_mesh_instance = znga_mesh_create_instance(&terrain_mesh, terrain_transform);
 
     znga_shader_set_uniform_mat4(shader.loc_u_projection, (GLfloat*)projection);
     znga_shader_set_uniform_mat4(shader.loc_u_view, (GLfloat*)view);
-    znga_shader_set_uniform_vec3(shader.loc_u_light_pos, (GLfloat*)light_pos);
+    znga_shader_set_uniform_vec3(shader.loc_u_light_dir, (GLfloat*)light_dir);
     znga_shader_set_uniform_vec3(shader.loc_u_light_color, (GLfloat*)light_color);
 
     glEnable(GL_DEPTH_TEST);
@@ -217,6 +251,8 @@ int main(int argc, char* argv[])
         znga_model_draw_instance(&model_instance_1);
         znga_model_draw_instance(&model_instance_2);
         znga_model_draw_instance(&model_instance_3);
+
+        znga_mesh_draw_instance(&terrain_mesh_instance);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)

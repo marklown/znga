@@ -66,3 +66,26 @@ void znga_mesh_draw(znga_mesh_t* mesh)
     }
     glBindVertexArray(0);
 }
+
+znga_mesh_instance_t znga_mesh_create_instance(znga_mesh_t* mesh, mat4x4 transform)
+{
+    znga_mesh_instance_t mesh_instance;
+    mesh_instance.mesh = mesh;
+    mat4x4_dup(mesh_instance.transform, transform);
+    return mesh_instance;
+}
+
+void znga_mesh_draw_instance(znga_mesh_instance_t* mesh_instance)
+{
+    if (!mesh_instance || !mesh_instance->mesh)
+    {
+        return;
+    }
+
+    znga_mesh_t* mesh = mesh_instance->mesh;
+
+    znga_shader_set_uniform_mat4(mesh->material.shader.loc_u_model,
+                                 (GLfloat*)mesh_instance->transform);
+
+    znga_mesh_draw(mesh);
+}

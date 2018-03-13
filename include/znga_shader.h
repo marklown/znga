@@ -9,7 +9,7 @@ typedef struct znga_shader_t
     GLuint loc_u_model;
     GLuint loc_u_view;
     GLuint loc_u_projection;
-    GLuint loc_u_light_pos;
+    GLuint loc_u_light_dir;
     GLuint loc_u_light_color;
     GLuint loc_u_object_color;
 } znga_shader_t;

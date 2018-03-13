@@ -32,10 +32,19 @@ typedef struct znga_mesh_t
     znga_material_t material;
 } znga_mesh_t;
 
+typedef struct znga_mesh_instance_t
+{
+    znga_mesh_t* mesh;
+    mat4x4 transform;
+} znga_mesh_instance_t;
+
 znga_mesh_t znga_mesh_create(const znga_vertex_t* vertices, GLuint num_vertices,
                              const GLuint* indices, GLuint num_indices,
                              znga_material_t material);
 
 void znga_mesh_draw(znga_mesh_t* mesh);
+
+znga_mesh_instance_t znga_mesh_create_instance(znga_mesh_t* mesh, mat4x4 transform);
+void znga_mesh_draw_instance(znga_mesh_instance_t* mesh_instance);
 
 #endif

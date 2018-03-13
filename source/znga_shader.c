@@ -71,9 +71,9 @@ znga_shader_t znga_shader_create(const char* vpath, const char* fpath)
     shader.loc_u_model = glGetUniformLocation(program, "u_model");
     shader.loc_u_view = glGetUniformLocation(program, "u_view");
     shader.loc_u_projection = glGetUniformLocation(program, "u_projection");
-    shader.loc_u_light_pos = glGetUniformLocation(program, "light_pos");
-    shader.loc_u_light_color = glGetUniformLocation(program, "light_color");
-    shader.loc_u_object_color = glGetUniformLocation(program, "object_color");
+    shader.loc_u_light_dir = glGetUniformLocation(program, "u_light_dir");
+    shader.loc_u_light_color = glGetUniformLocation(program, "u_light_color");
+    shader.loc_u_object_color = glGetUniformLocation(program, "u_object_color");
 
     return shader;
 }
