@@ -18,7 +18,7 @@ float time_delta = 0.0f;
 float time_last = 0.0f;
 
 // camera system
-vec3 camera_pos = {0.0f, 0.0f, 10.0f};
+vec3 camera_pos = {0.0f, 10.0f, 10.0f};
 vec3 camera_front = {0.0f, 0.0f, -1.0f};
 vec3 camera_up = {0.0f, 1.0f, 0.0f};
 float camera_last_x = 1920.0f / 2.0f;
@@ -26,10 +26,12 @@ float camera_last_y = 1080.0f / 2.0f;
 float camera_yaw = -90.0f;
 float camera_pitch = 0.0f;
 bool first_mouse = true;
+bool camera_free = true;
 
 bool fill_mode_line = false;
 
 extern float* terrain_height;
+const unsigned int terrain_size = 256;
 
 static GLFWwindow* window = NULL;
 
@@ -56,6 +58,18 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         {
             fill_mode_line = false;
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+    }
+    
+    if (key == GLFW_KEY_C && action == GLFW_PRESS)
+    {
+        if (!camera_free)
+        {
+            camera_free = true;
+        }
+        else 
+        {
+            camera_free = false;
         }
     }
 }
@@ -100,7 +114,7 @@ static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos)
 
 static void process_input(GLFWwindow* window)
 {
-    const float camera_speed = 7.0f * time_delta;
+    const float camera_speed = 12.0f * time_delta;
     vec3 tmp;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
@@ -127,10 +141,13 @@ static void process_input(GLFWwindow* window)
         vec3_add(camera_pos, camera_pos, tmp);
     }
 
-    float x = camera_pos[0];
-    float z = camera_pos[2];
-    float y = terrain_height[(int)x * 256 + (int)z] + 1;
-    camera_pos[1] = y;
+    if (!camera_free)
+    {
+        float x = camera_pos[0];
+        float z = camera_pos[2];
+        float y = terrain_height[(int)x * terrain_size + (int)z] + 1;
+        camera_pos[1] = 2.0;//y;
+    }
 }
 
 int main(int argc, char* argv[])
@@ -191,7 +208,7 @@ int main(int argc, char* argv[])
     mat4x4_identity(projection);
     mat4x4_identity(view);
 
-    mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 100.0f);
+    mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 256.0f);
     mat4x4_translate(view, 0, 0, -10.0f);
 
     // Create a few model instances
@@ -209,8 +226,7 @@ int main(int argc, char* argv[])
     vec3 light_color = {.75f, .75f, .75f};
 
     // Terrain
-    const unsigned int terrain_size = 256;
-    znga_mesh_t terrain_mesh = znga_terrain_create(terrain_size);
+    znga_mesh_t terrain_mesh = znga_terrain_create_flat(terrain_size);
     terrain_mesh.material.shader = shader;
     mat4x4 terrain_transform;
     mat4x4_identity(terrain_transform);
