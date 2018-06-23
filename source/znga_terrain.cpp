@@ -5,11 +5,14 @@
 #include <string.h>
 #include <stdio.h>
 
+namespace Znga {
+namespace Graphics {
+
 float* terrain_height;
 
 static struct osn_context* ctx;
 
-float znga_terrain_get_height_at(int x, int z)
+float GetHeightAt(int x, int z)
 {
     // 16, 16
     int octaves = 4;
@@ -22,17 +25,15 @@ float znga_terrain_get_height_at(int x, int z)
     return val;
 }
 
-znga_mesh_t znga_terrain_create_smooth(unsigned int size)
+Mesh* CreateSmoothTerrain(unsigned int size, const Shader& shader)
 {
     open_simplex_noise(77374, &ctx); //77374
 
     const unsigned int num_vertices = size * size;
     const unsigned int num_indices = size * size * 6;
 
-    znga_vertex_t* vertices = malloc(sizeof(znga_vertex_t) * num_vertices);
-    memset(vertices, 0, sizeof(znga_vertex_t) * num_vertices);
-
-    terrain_height = malloc(sizeof(float) * num_vertices);
+    std::vector<Vertex> vertices(num_vertices);
+    terrain_height = new float[num_vertices];
 
     float scale = 10.0;
     float y_scale = 5.0;
@@ -41,7 +42,7 @@ znga_mesh_t znga_terrain_create_smooth(unsigned int size)
     {
         for (unsigned int j = 0; j < size; j++)
         {
-            float y = znga_terrain_get_height_at(i, j);
+            float y = GetHeightAt(i, j);
 
             unsigned int vertex_index = i * size + j;
 
@@ -57,10 +58,10 @@ znga_mesh_t znga_terrain_create_smooth(unsigned int size)
 
             unsigned int xx = (x > 0 ? x : 1);
             unsigned int zz = (z > 0 ? z : 1);
-            float hl = znga_terrain_get_height_at(xx - 1, zz);
-            float hr = znga_terrain_get_height_at(xx + 1, zz);
-            float hd = znga_terrain_get_height_at(xx, zz + 1);
-            float hu = znga_terrain_get_height_at(xx, zz - 1);
+            float hl = GetHeightAt(xx - 1, zz);
+            float hr = GetHeightAt(xx + 1, zz);
+            float hd = GetHeightAt(xx, zz + 1);
+            float hu = GetHeightAt(xx, zz - 1);
             vec3 normal = {hl - hr, 2.0f, hd - hu};
             vec3_norm(normal, normal);
             vertices[vertex_index].normal[0] = normal[0];
@@ -69,8 +70,7 @@ znga_mesh_t znga_terrain_create_smooth(unsigned int size)
         }
     }
 
-    GLuint* indices = malloc(sizeof(GLuint) * num_indices);
-    memset(indices, 0, sizeof(GLuint) * num_indices);
+    std::vector<GLuint> indices(num_indices);
 
     unsigned int index = 0;
     for (unsigned int i = 0; i < size - 1; i++)
@@ -88,30 +88,26 @@ znga_mesh_t znga_terrain_create_smooth(unsigned int size)
         }
     }
 
-    znga_material_t material;
+    Material material;
+    material.shader = shader;
     vec3 color = {96.0f/255.0f, 128.0f/255.0f, 56.0f/255.0f};
     //vec3 color = {255.0f/255.0f, 250.0f/255.0f, 250.0f/255.0f};
     memcpy(material.color, color, sizeof(vec3));
 
-    znga_mesh_t mesh = znga_mesh_create(vertices, num_vertices, indices, num_indices, material);
-
-    free(vertices);
-    free(indices);
+    Mesh* mesh = new Mesh(vertices, indices, material);
 
     return mesh;
 }
 
-znga_mesh_t znga_terrain_create_flat(unsigned int size)
+Mesh* CreateFlatTerrain(unsigned int size, const Shader& shader)
 {
     open_simplex_noise(77374, &ctx);
 
     const unsigned int num_vertices = size * size * 6;
 
-    znga_vertex_t* vertices = malloc(sizeof(znga_vertex_t) * num_vertices);
-    memset(vertices, 0, sizeof(znga_vertex_t) * num_vertices);
 
-    terrain_height = malloc(sizeof(float) * size * size);
-    memset(terrain_height, 0, sizeof(float) * size * size);
+    std::vector<Vertex> vertices(num_vertices);
+    terrain_height = new float[num_vertices];
 
     unsigned int index = 0;
 
@@ -122,12 +118,12 @@ znga_mesh_t znga_terrain_create_flat(unsigned int size)
     {
         for (unsigned int j = 0; j < size; j++)
         {
-            float y0 = znga_terrain_get_height_at(i + 0, j + 0) * y_scale;
-            float y1 = znga_terrain_get_height_at(i + 1, j + 0) * y_scale;
-            float y2 = znga_terrain_get_height_at(i + 0, j + 1) * y_scale;
-            float y3 = znga_terrain_get_height_at(i + 1, j + 0) * y_scale;
-            float y4 = znga_terrain_get_height_at(i + 1, j + 1) * y_scale;
-            float y5 = znga_terrain_get_height_at(i + 0, j + 1) * y_scale;
+            float y0 = GetHeightAt(i + 0, j + 0) * y_scale;
+            float y1 = GetHeightAt(i + 1, j + 0) * y_scale;
+            float y2 = GetHeightAt(i + 0, j + 1) * y_scale;
+            float y3 = GetHeightAt(i + 1, j + 0) * y_scale;
+            float y4 = GetHeightAt(i + 1, j + 1) * y_scale;
+            float y5 = GetHeightAt(i + 0, j + 1) * y_scale;
 
             float x = i * scale;
             float z = j * scale;
@@ -178,14 +174,17 @@ znga_mesh_t znga_terrain_create_flat(unsigned int size)
         }
     }
 
-    znga_material_t material;
+    Material material;
+    material.shader = shader;
     vec3 color = {96.0f/255.0f, 128.0f/255.0f, 56.0f/255.0f};
     //vec3 color = {255.0f/255.0f, 250.0f/255.0f, 250.0f/255.0f};
     memcpy(material.color, color, sizeof(vec3));
 
-    znga_mesh_t mesh = znga_mesh_create(vertices, num_vertices, 0, 0, material);
-
-    free(vertices);
+    std::vector<GLuint> indices;
+    Mesh* mesh = new Mesh(vertices, indices, material);
 
     return mesh;
+}
+
+}
 }

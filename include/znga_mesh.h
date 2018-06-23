@@ -2,49 +2,70 @@
 #define ZNGA_MESH_H
 
 #include <OpenGL/gl3.h>
+
 #include "znga_texture.h"
 #include "znga_shader.h"
 #include "linmath.h"
 
-typedef struct znga_material_t
-{
-    znga_shader_t shader;
-    znga_texture_t diffuse_map;
-    znga_texture_t specular_map;
-    znga_texture_t normal_map;
-    vec3 color;
-} znga_material_t;
+#include <vector>
 
-typedef struct znga_vertex_t
+namespace Znga {
+namespace Graphics {
+
+struct Material
+{
+    Shader shader;
+    Texture diffuseMap;
+    Texture specularMap;
+    Texture normalMap;
+    vec3 color;
+};
+
+struct Vertex 
 {
     GLfloat position[3];
     GLfloat normal[3];
     GLfloat tex_coord[2];
-} znga_vertex_t;
+};
 
-typedef struct znga_mesh_t
+class Mesh 
 {
-    GLuint vao;
-    GLuint vbo;
-    GLuint ebo;
-    GLuint num_vertices;
-    GLuint num_indices;
-    znga_material_t material;
-} znga_mesh_t;
+public:
+    Mesh() = default;
+    Mesh(const std::vector<Vertex>& vertices,
+         const std::vector<GLuint>& indices,
+         const Material& material);
+    virtual ~Mesh();
 
-typedef struct znga_mesh_instance_t
+    void Render() const;
+
+    Material m_material;
+
+private:
+    GLuint m_vao = 0;
+    GLuint m_vbo = 0;
+    GLuint m_ebo = 0;
+    GLuint m_numVertices = 0;
+    GLuint m_numIndices = 0;
+    GLuint m_uniformColor = 0;
+};
+
+class MeshInstance
 {
-    znga_mesh_t* mesh;
-    mat4x4 transform;
-} znga_mesh_instance_t;
+public:
+    MeshInstance() = default;
+    virtual ~MeshInstance() = default;
+    MeshInstance(const Mesh* mesh, mat4x4 transform);
 
-znga_mesh_t znga_mesh_create(const znga_vertex_t* vertices, GLuint num_vertices,
-                             const GLuint* indices, GLuint num_indices,
-                             znga_material_t material);
+    void Render() const;
 
-void znga_mesh_draw(znga_mesh_t* mesh);
+private:
+    const Mesh* m_mesh = nullptr;
+    mat4x4 m_transform;
+    GLuint m_uniformTransform = 0;
+};
 
-znga_mesh_instance_t znga_mesh_create_instance(znga_mesh_t* mesh, mat4x4 transform);
-void znga_mesh_draw_instance(znga_mesh_instance_t* mesh_instance);
+} // namespace Graphics
+} // namespace Znga
 
 #endif

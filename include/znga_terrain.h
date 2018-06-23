@@ -3,7 +3,13 @@
 
 #include "znga_mesh.h"
 
-znga_mesh_t znga_terrain_create_smooth(unsigned int size);
-znga_mesh_t znga_terrain_create_flat(unsigned int size);
+namespace Znga {
+namespace Graphics {
+
+Mesh* CreateSmoothTerrain(unsigned int size, const Shader& shader);
+Mesh* CreateFlatTerrain(unsigned int size, const Shader& shader);
+
+}
+}
 
 #endif

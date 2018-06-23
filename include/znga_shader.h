@@ -2,22 +2,38 @@
 #define ZNGA_SHADER_H
 
 #include <GLFW/glfw3.h>
+#include <string>
 
-typedef struct znga_shader_t 
+namespace Znga {
+namespace Graphics {
+
+class Shader
 {
-    GLuint id;
-    GLuint loc_u_model;
-    GLuint loc_u_view;
-    GLuint loc_u_projection;
-    GLuint loc_u_light_dir;
-    GLuint loc_u_light_color;
-    GLuint loc_u_object_color;
-} znga_shader_t;
+public:
+    Shader() = default;
+    Shader(const std::string& vPath, const std::string& fPath);
+    virtual ~Shader();
 
-const char* znga_read_file(const char* path);
-znga_shader_t znga_shader_create(const char* vpath, const char* fpath);
+    GLuint GetUniformLocation(const std::string& uniform) const;
+    void SetUniformMat4(GLuint location, const GLfloat* values) const;
+    void SetUniformVec3(GLuint location, const GLfloat* values) const;
 
-void znga_shader_set_uniform_mat4(GLuint location, GLfloat* values);
-void znga_shader_set_uniform_vec3(GLuint location, GLfloat* values);
+    void Enable() const;
+    void Disable() const;
+
+private:
+    const char* ReadFile(const std::string& path) const;
+
+    GLuint m_id;
+    GLuint m_uniformModel;
+    GLuint m_uniformView;
+    GLuint m_uniformProjection;
+    GLuint m_uniformLightDir;
+    GLuint m_uniformLightColor;
+    GLuint m_uniformObjectColor;
+};
+
+}
+}
 
 #endif

@@ -2,17 +2,24 @@
 #define ZNGA_TEXTURE_H
 
 #include <GLFW/glfw3.h>
+#include <string>
 
-#define DIFFUSE_MAP 0
-#define SPECULAR_MAP 1
-#define NORMAL_MAP 2
+namespace Znga {
+namespace Graphics {
 
-typedef struct znga_texture_t
+const uint8_t DIFFUSE_MAP = 0;
+const uint8_t SPECULAR_MAP = 1;
+const uint8_t NORMAL_MAP = 2;
+
+struct Texture
 {
-    GLuint id;
-    uint8_t type;
-} znga_texture_t;
+    GLuint id = 0;
+    uint8_t type = DIFFUSE_MAP;
 
-znga_texture_t znga_texture_create(const char* path, uint8_t type);
+    void Load(const std::string& path, uint8_t type);
+};
+
+} // namespace Graphics
+} // namespace Znga
 
 #endif

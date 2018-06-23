@@ -13,6 +13,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+using namespace Znga::Graphics;
+
 // time
 float time_delta = 0.0f;
 float time_last = 0.0f;
@@ -149,10 +151,10 @@ static void process_input(GLFWwindow* window)
 
     if (!camera_free)
     {
-        float x = camera_pos[0];
-        float z = camera_pos[2];
-        float y = terrain_height[(int)x * terrain_size + (int)z] + 1;
-        camera_pos[1] = y;
+        //float x = camera_pos[0];
+        //float z = camera_pos[2];
+        //float y = terrain_height[(int)x * terrain_size + (int)z] + 1;
+        //camera_pos[1] = y;
     }
 }
 
@@ -198,17 +200,17 @@ int main(int argc, char* argv[])
 
     glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
 
-    znga_shader_t shader = znga_shader_create(
+    Shader shader(
         "/Users/markl/Dev/znga/shaders/flat.vert",
         "/Users/markl/Dev/znga/shaders/flat.frag"
     );
 
-    znga_model_t cube = znga_model_create("/Users/markl/Dev/znga/models/cube.obj");
-    cube.meshes[0].material.shader = shader;
-    vec3 color = {1.0f, 0.5f, 0.31f};
-    memcpy(cube.meshes[0].material.color, color, sizeof(vec3));
+//    Model* cube = new Model("/Users/markl/Dev/znga/models/cube.obj");
+//    cube.meshes[0].material.shader = shader;
+//    vec3 color = {1.0f, 0.5f, 0.31f};
+//    memcpy(cube.meshes[0].material.color, color, sizeof(vec3));
 
-    glUseProgram(shader.id);
+    shader.Enable();
 
     mat4x4 projection, view;
     mat4x4_identity(projection);
@@ -217,7 +219,7 @@ int main(int argc, char* argv[])
     mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 100000.0f);
 
     // Create a few model instances
-    mat4x4 transform;
+/*    mat4x4 transform;
     mat4x4_identity(transform);
     mat4x4_translate(transform, 32.0f, 6.0f, 32.0f);
     znga_model_instance_t model_instance_1 = znga_model_create_instance(&cube, transform);
@@ -225,24 +227,31 @@ int main(int argc, char* argv[])
     znga_model_instance_t model_instance_2 = znga_model_create_instance(&cube, transform);
     mat4x4_translate(transform, 42.0f, 2.0f, 42.0f);
     znga_model_instance_t model_instance_3 = znga_model_create_instance(&cube, transform);
+    */
 
     // Setup the light
     vec3 light_dir = {0.0f, -1.0f, -1.0f};
     vec3 light_color = {.75f, .75f, .75f};
 
     // Terrain
-    znga_mesh_t terrain_mesh = znga_terrain_create_smooth(terrain_size);
-    terrain_mesh.material.shader = shader;
+    Mesh* terrain_mesh = CreateSmoothTerrain(terrain_size, shader);
     mat4x4 terrain_transform;
     mat4x4_identity(terrain_transform);
     //mat4x4_scale(terrain_transform, terrain_transform, 5.0f);
     //mat4x4_translate(terrain_transform, -64.0f, -4.0f, -128);
-    znga_mesh_instance_t terrain_mesh_instance = znga_mesh_create_instance(&terrain_mesh, terrain_transform);
+    MeshInstance terrain_mesh_instance(terrain_mesh, terrain_transform);
 
-    znga_shader_set_uniform_mat4(shader.loc_u_projection, (GLfloat*)projection);
-    znga_shader_set_uniform_mat4(shader.loc_u_view, (GLfloat*)view);
-    znga_shader_set_uniform_vec3(shader.loc_u_light_dir, (GLfloat*)light_dir);
-    znga_shader_set_uniform_vec3(shader.loc_u_light_color, (GLfloat*)light_color);
+    GLuint uniformModel = shader.GetUniformLocation("u_model");
+    GLuint uniformView = shader.GetUniformLocation("u_view");
+    GLuint uniformProjection = shader.GetUniformLocation("u_projection");
+    GLuint uniformLightDir = shader.GetUniformLocation("u_light_dir");
+    GLuint uniformLightColor = shader.GetUniformLocation("u_light_color");
+    GLuint uniformObjectColor = shader.GetUniformLocation("u_object_color");
+
+    shader.SetUniformMat4(uniformProjection, (GLfloat*)projection);
+    shader.SetUniformMat4(uniformView, (GLfloat*)view);
+    shader.SetUniformVec3(uniformLightDir, (GLfloat*)light_dir);
+    shader.SetUniformVec3(uniformLightColor, (GLfloat*)light_color);
 
     glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
@@ -260,8 +269,9 @@ int main(int argc, char* argv[])
         vec3 center;
         vec3_add(center, camera_pos, camera_front);
         mat4x4_look_at(view, camera_pos, center , camera_up);
-        znga_shader_set_uniform_mat4(shader.loc_u_view, (GLfloat*)view);
+        shader.SetUniformMat4(uniformView, (GLfloat*)view);
 
+/*
         mat4x4_rotate_X(model_instance_1.transform,
                         model_instance_1.transform,
                         0.01f * RAD(45.0f));
@@ -274,8 +284,9 @@ int main(int argc, char* argv[])
         znga_model_draw_instance(&model_instance_1);
         znga_model_draw_instance(&model_instance_2);
         znga_model_draw_instance(&model_instance_3);
+*/
 
-        znga_mesh_draw_instance(&terrain_mesh_instance);
+        terrain_mesh_instance.Render();
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)
@@ -287,7 +298,8 @@ int main(int argc, char* argv[])
         glfwPollEvents();
     }
 
-    znga_model_free(&cube);
+    //delete cube;
+    delete terrain_mesh;
 
     glfwDestroyWindow(window);
 

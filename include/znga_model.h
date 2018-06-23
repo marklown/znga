@@ -4,25 +4,41 @@
 #include "znga_mesh.h"
 #include "linmath.h"
 
-typedef struct znga_model_t
+#include <string>
+
+namespace Znga {
+namespace Graphics {
+
+class Model
 {
-    znga_mesh_t* meshes;
-    unsigned int num_meshes;
-} znga_model_t;
+public:
+    Model() = delete;
+    Model(const std::string& path);
+    virtual ~Model();
 
-typedef struct znga_model_instance_t
+    void Render() const;
+    unsigned int GetNumberOfMeshes() const { return m_meshes.size(); }
+
+private:
+    std::vector<Mesh*> m_meshes;
+};
+
+class ModelInstance
 {
-    znga_model_t* model;
-    mat4x4 transform;
-} znga_model_instance_t;
+public:
+    ModelInstance() = default;
+    virtual ~ModelInstance() = default;
+    ModelInstance(const Model* model, mat4x4 transform);
 
-znga_model_t znga_model_create(const char* path);
-void znga_model_free(znga_model_t* model);
-void znga_model_draw(znga_model_t* model);
+    void Render() const;
 
-znga_model_instance_t znga_model_create_instance(znga_model_t* model, mat4x4 transform);
-void znga_model_draw_instance(znga_model_instance_t* model_instance);
+private:
+    const Model* m_model = nullptr;
+    mat4x4 m_transform;
+    GLuint m_uniformTransform;
+};
 
-
+}
+}
 
 #endif

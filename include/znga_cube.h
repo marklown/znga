@@ -4,7 +4,10 @@
 
 #include "znga_mesh.h"
 
-znga_vertex_t cube_vertices[] = {
+namespace Znga {
+namespace Graphics {
+
+Vertex CubeVertices[] = {
     // back face
     {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f},
     { 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f},
@@ -53,5 +56,8 @@ znga_vertex_t cube_vertices[] = {
     {-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 0.0f},
     {-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f}
 };
+
+}
+}
 
 #endif

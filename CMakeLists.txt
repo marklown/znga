@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 project(znga)
 
-file(GLOB SRC "source/*.c")
+set (CMAKE_CXX_STANDARD 11)
+
+file(GLOB SRC "source/*.cpp")
 file(GLOB INC "include/*.h")
 
 find_package(PkgConfig REQUIRED)
