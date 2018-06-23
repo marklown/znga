@@ -18,7 +18,7 @@ float time_delta = 0.0f;
 float time_last = 0.0f;
 
 // camera system
-vec3 camera_pos = {0.0f, 10.0f, 10.0f};
+vec3 camera_pos = {350.0f, 20.0f, 350.0f};
 vec3 camera_front = {0.0f, 0.0f, -1.0f};
 vec3 camera_up = {0.0f, 1.0f, 0.0f};
 float camera_last_x = 1920.0f / 2.0f;
@@ -27,6 +27,12 @@ float camera_yaw = -90.0f;
 float camera_pitch = 0.0f;
 bool first_mouse = true;
 bool camera_free = true;
+
+// fog
+float fog_density = 0.3f;
+vec4 fog_color = {.5f, .5f, .5f, 1.0f};
+
+
 
 bool fill_mode_line = false;
 
@@ -114,7 +120,7 @@ static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos)
 
 static void process_input(GLFWwindow* window)
 {
-    const float camera_speed = 12.0f * time_delta;
+    const float camera_speed = 100.0f * time_delta;
     vec3 tmp;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
@@ -146,7 +152,7 @@ static void process_input(GLFWwindow* window)
         float x = camera_pos[0];
         float z = camera_pos[2];
         float y = terrain_height[(int)x * terrain_size + (int)z] + 1;
-        camera_pos[1] = 2.0;//y;
+        camera_pos[1] = y;
     }
 }
 
@@ -208,8 +214,7 @@ int main(int argc, char* argv[])
     mat4x4_identity(projection);
     mat4x4_identity(view);
 
-    mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 256.0f);
-    mat4x4_translate(view, 0, 0, -10.0f);
+    mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 100000.0f);
 
     // Create a few model instances
     mat4x4 transform;
@@ -226,10 +231,11 @@ int main(int argc, char* argv[])
     vec3 light_color = {.75f, .75f, .75f};
 
     // Terrain
-    znga_mesh_t terrain_mesh = znga_terrain_create_flat(terrain_size);
+    znga_mesh_t terrain_mesh = znga_terrain_create_smooth(terrain_size);
     terrain_mesh.material.shader = shader;
     mat4x4 terrain_transform;
     mat4x4_identity(terrain_transform);
+    //mat4x4_scale(terrain_transform, terrain_transform, 5.0f);
     //mat4x4_translate(terrain_transform, -64.0f, -4.0f, -128);
     znga_mesh_instance_t terrain_mesh_instance = znga_mesh_create_instance(&terrain_mesh, terrain_transform);
 
@@ -239,6 +245,7 @@ int main(int argc, char* argv[])
     znga_shader_set_uniform_vec3(shader.loc_u_light_color, (GLfloat*)light_color);
 
     glEnable(GL_DEPTH_TEST);
+    glCullFace(GL_BACK);
 
     while (!glfwWindowShouldClose(window))
     {

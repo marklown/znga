@@ -11,9 +11,10 @@ static struct osn_context* ctx;
 
 float znga_terrain_get_height_at(int x, int z)
 {
-    int octaves = 16;
+    // 16, 16
+    int octaves = 4;
     float val = 0;
-    float feature_size = 24;
+    float feature_size = 16;
     for (int i = 1; i <= octaves; i++) 
     {
         val += (float)open_simplex_noise2(ctx, (float)x / feature_size / i, (float)z / feature_size / i);
@@ -23,7 +24,7 @@ float znga_terrain_get_height_at(int x, int z)
 
 znga_mesh_t znga_terrain_create_smooth(unsigned int size)
 {
-    open_simplex_noise(77374, &ctx);
+    open_simplex_noise(77374, &ctx); //77374
 
     const unsigned int num_vertices = size * size;
     const unsigned int num_indices = size * size * 6;
@@ -33,6 +34,9 @@ znga_mesh_t znga_terrain_create_smooth(unsigned int size)
 
     terrain_height = malloc(sizeof(float) * num_vertices);
 
+    float scale = 10.0;
+    float y_scale = 5.0;
+
     for (unsigned int i = 0; i < size; i++)
     {
         for (unsigned int j = 0; j < size; j++)
@@ -41,18 +45,22 @@ znga_mesh_t znga_terrain_create_smooth(unsigned int size)
 
             unsigned int vertex_index = i * size + j;
 
+            y *= y_scale;
+            float x = i * scale;
+            float z = j * scale;
+
             terrain_height[vertex_index] = y;
 
-            vertices[vertex_index].position[0] = i;
+            vertices[vertex_index].position[0] = x;
             vertices[vertex_index].position[1] = y;
-            vertices[vertex_index].position[2] = j;
+            vertices[vertex_index].position[2] = z;
 
-            unsigned int x = (i > 0 ? i : 1);
-            unsigned int z = (j > 0 ? j : 1);
-            float hl = znga_terrain_get_height_at(x - 1, z);
-            float hr = znga_terrain_get_height_at(x + 1, z);
-            float hd = znga_terrain_get_height_at(x, z + 1);
-            float hu = znga_terrain_get_height_at(x, z - 1);
+            unsigned int xx = (x > 0 ? x : 1);
+            unsigned int zz = (z > 0 ? z : 1);
+            float hl = znga_terrain_get_height_at(xx - 1, zz);
+            float hr = znga_terrain_get_height_at(xx + 1, zz);
+            float hd = znga_terrain_get_height_at(xx, zz + 1);
+            float hu = znga_terrain_get_height_at(xx, zz - 1);
             vec3 normal = {hl - hr, 2.0f, hd - hu};
             vec3_norm(normal, normal);
             vertices[vertex_index].normal[0] = normal[0];
@@ -82,6 +90,7 @@ znga_mesh_t znga_terrain_create_smooth(unsigned int size)
 
     znga_material_t material;
     vec3 color = {96.0f/255.0f, 128.0f/255.0f, 56.0f/255.0f};
+    //vec3 color = {255.0f/255.0f, 250.0f/255.0f, 250.0f/255.0f};
     memcpy(material.color, color, sizeof(vec3));
 
     znga_mesh_t mesh = znga_mesh_create(vertices, num_vertices, indices, num_indices, material);
@@ -106,41 +115,46 @@ znga_mesh_t znga_terrain_create_flat(unsigned int size)
 
     unsigned int index = 0;
 
+    float scale = 10.0;
+    float y_scale = 5.0;
+
     for (unsigned int i = 0; i < size; i++)
     {
         for (unsigned int j = 0; j < size; j++)
         {
+            float y0 = znga_terrain_get_height_at(i + 0, j + 0) * y_scale;
+            float y1 = znga_terrain_get_height_at(i + 1, j + 0) * y_scale;
+            float y2 = znga_terrain_get_height_at(i + 0, j + 1) * y_scale;
+            float y3 = znga_terrain_get_height_at(i + 1, j + 0) * y_scale;
+            float y4 = znga_terrain_get_height_at(i + 1, j + 1) * y_scale;
+            float y5 = znga_terrain_get_height_at(i + 0, j + 1) * y_scale;
 
-            float y0 = znga_terrain_get_height_at(i + 0, j + 0);
-            float y1 = znga_terrain_get_height_at(i + 1, j + 0);
-            float y2 = znga_terrain_get_height_at(i + 0, j + 1);
-            float y3 = znga_terrain_get_height_at(i + 1, j + 0);
-            float y4 = znga_terrain_get_height_at(i + 1, j + 1);
-            float y5 = znga_terrain_get_height_at(i + 0, j + 1);
+            float x = i * scale;
+            float z = j * scale;
 
-            vertices[index + 0].position[0] = i;
+            vertices[index + 0].position[0] = x;
             vertices[index + 0].position[1] = y0;
-            vertices[index + 0].position[2] = j;
+            vertices[index + 0].position[2] = z;
 
-            vertices[index + 1].position[0] = i + 1;
+            vertices[index + 1].position[0] = x + 1 * scale;
             vertices[index + 1].position[1] = y1;
-            vertices[index + 1].position[2] = j;
+            vertices[index + 1].position[2] = z;
 
-            vertices[index + 2].position[0] = i;
+            vertices[index + 2].position[0] = x;
             vertices[index + 2].position[1] = y2;
-            vertices[index + 2].position[2] = j + 1;
+            vertices[index + 2].position[2] = z + 1 * scale;
 
-            vertices[index + 3].position[0] = i + 1;
+            vertices[index + 3].position[0] = x + 1 * scale;
             vertices[index + 3].position[1] = y3;
-            vertices[index + 3].position[2] = j;
+            vertices[index + 3].position[2] = z;
 
-            vertices[index + 4].position[0] = i + 1;
+            vertices[index + 4].position[0] = x + 1 * scale;
             vertices[index + 4].position[1] = y4;
-            vertices[index + 4].position[2] = j + 1;
+            vertices[index + 4].position[2] = z + 1 * scale;
 
-            vertices[index + 5].position[0] = i;
+            vertices[index + 5].position[0] = x;
             vertices[index + 5].position[1] = y5;
-            vertices[index + 5].position[2] = j + 1;
+            vertices[index + 5].position[2] = z + 1 * scale;
 
             vec3 normal;
             vec3 vec1, vec2;
@@ -160,15 +174,13 @@ znga_mesh_t znga_terrain_create_flat(unsigned int size)
             memcpy(vertices[index + 4].normal, normal, sizeof(vec3));
             memcpy(vertices[index + 5].normal, normal, sizeof(vec3));
 
-            //unsigned int vertex_index = i * size + j;
-            //terrain_height[vertex_index] = y;
-
             index += 6;
         }
     }
 
     znga_material_t material;
     vec3 color = {96.0f/255.0f, 128.0f/255.0f, 56.0f/255.0f};
+    //vec3 color = {255.0f/255.0f, 250.0f/255.0f, 250.0f/255.0f};
     memcpy(material.color, color, sizeof(vec3));
 
     znga_mesh_t mesh = znga_mesh_create(vertices, num_vertices, 0, 0, material);
