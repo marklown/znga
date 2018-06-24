@@ -1,31 +1,30 @@
 
-#include "znga_terrain.h"
+#include "Terrain.h"
 #include "open-simplex-noise.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
+float* terrain_height;
+
 namespace Znga {
 namespace Graphics {
-
-float* terrain_height;
 
 static struct osn_context* ctx;
 
 float GetHeightAt(int x, int z)
 {
     // 16, 16
-    int octaves = 4;
+    int octaves = 1;
     float val = 0;
     float feature_size = 16;
-    for (int i = 1; i <= octaves; i++) 
-    {
+    for (int i = 1; i <= octaves; i++) {
         val += (float)open_simplex_noise2(ctx, (float)x / feature_size / i, (float)z / feature_size / i);
     }
     return val;
 }
 
-Mesh* CreateSmoothTerrain(unsigned int size, const Shader& shader)
+Mesh CreateSmoothTerrain(unsigned int size)
 {
     open_simplex_noise(77374, &ctx); //77374
 
@@ -35,8 +34,8 @@ Mesh* CreateSmoothTerrain(unsigned int size, const Shader& shader)
     std::vector<Vertex> vertices(num_vertices);
     terrain_height = new float[num_vertices];
 
-    float scale = 10.0;
-    float y_scale = 5.0;
+    float scale = 1.0;
+    float y_scale = 1.0;
 
     for (unsigned int i = 0; i < size; i++)
     {
@@ -88,42 +87,36 @@ Mesh* CreateSmoothTerrain(unsigned int size, const Shader& shader)
         }
     }
 
-    Material material;
-    material.shader = shader;
-    vec3 color = {96.0f/255.0f, 128.0f/255.0f, 56.0f/255.0f};
-    //vec3 color = {255.0f/255.0f, 250.0f/255.0f, 250.0f/255.0f};
-    memcpy(material.color, color, sizeof(vec3));
-
-    Mesh* mesh = new Mesh(vertices, indices, material);
-
-    return mesh;
+    return CreateMesh(vertices, indices);
 }
 
-Mesh* CreateFlatTerrain(unsigned int size, const Shader& shader)
+Mesh CreateFlatTerrain(unsigned int size)
 {
     open_simplex_noise(77374, &ctx);
 
     const unsigned int num_vertices = size * size * 6;
-
 
     std::vector<Vertex> vertices(num_vertices);
     terrain_height = new float[num_vertices];
 
     unsigned int index = 0;
 
-    float scale = 10.0;
-    float y_scale = 5.0;
+    float scale = 1.0;
+    float y_scale = 1.0;
 
-    for (unsigned int i = 0; i < size; i++)
-    {
-        for (unsigned int j = 0; j < size; j++)
-        {
+    for (unsigned int i = 0; i < size; i++) {
+        for (unsigned int j = 0; j < size; j++) {
             float y0 = GetHeightAt(i + 0, j + 0) * y_scale;
             float y1 = GetHeightAt(i + 1, j + 0) * y_scale;
             float y2 = GetHeightAt(i + 0, j + 1) * y_scale;
             float y3 = GetHeightAt(i + 1, j + 0) * y_scale;
             float y4 = GetHeightAt(i + 1, j + 1) * y_scale;
             float y5 = GetHeightAt(i + 0, j + 1) * y_scale;
+
+            terrain_height[(i+0) * size + (j+0)] = y0;
+            terrain_height[(i+1) * size + (j+0)] = y1;
+            terrain_height[(i+0) * size + (j+1)] = y2;
+            terrain_height[(i+1) * size + (j+1)] = y4;
 
             float x = i * scale;
             float z = j * scale;
@@ -174,17 +167,8 @@ Mesh* CreateFlatTerrain(unsigned int size, const Shader& shader)
         }
     }
 
-    Material material;
-    material.shader = shader;
-    vec3 color = {96.0f/255.0f, 128.0f/255.0f, 56.0f/255.0f};
-    //vec3 color = {255.0f/255.0f, 250.0f/255.0f, 250.0f/255.0f};
-    memcpy(material.color, color, sizeof(vec3));
-
-    std::vector<GLuint> indices;
-    Mesh* mesh = new Mesh(vertices, indices, material);
-
-    return mesh;
+    return CreateMesh(vertices);
 }
 
-}
-}
+} // namespace Graphics
+} // namespace Znga

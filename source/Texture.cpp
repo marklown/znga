@@ -1,4 +1,4 @@
-#include "znga_texture.h"
+#include "Texture.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <OpenGL/GL3.h>
@@ -6,12 +6,14 @@
 namespace Znga {
 namespace Graphics {
 
-void Texture::Load(const std::string& path, uint8_t typeIn)
+Texture LoadTexture(const std::string& path, uint8_t type)
 {
-    type = typeIn;
+    Texture texture;
 
-    glGenTextures(1, &id);
-    glBindTexture(GL_TEXTURE_2D, id);
+    texture.type = type;
+
+    glGenTextures(1, &texture.id);
+    glBindTexture(GL_TEXTURE_2D, texture.id);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -23,12 +25,14 @@ void Texture::Load(const std::string& path, uint8_t typeIn)
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &num_channels, 0);
     if (!data) {
         printf("Failed to read texture file: %s\n", path.c_str());
-        return;
+        return Texture();
     }
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
+
+    return texture;
 }
 
-}
-}
+} // namespace Graphics
+} // namespace Znga

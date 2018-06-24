@@ -1,12 +1,12 @@
 
-#include "znga_shader.h"
+#include "Shader.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 namespace Znga {
 namespace Graphics {
 
-Shader::Shader(const std::string& vPath, const std::string& fPath)
+Shader LoadShader(const std::string& vPath, const std::string& fPath)
 {
     GLuint program, vertex_shader, fragment_shader;
     GLint success;
@@ -18,19 +18,19 @@ Shader::Shader(const std::string& vPath, const std::string& fPath)
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    glShaderSource(vertex_shader, 1, &vertex_shader_src, NULL);
+    glShaderSource(vertex_shader, 1, &vertex_shader_src, nullptr);
     glCompileShader(vertex_shader);
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
     if(!success) {
-        glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
+        glGetShaderInfoLog(vertex_shader, 512, nullptr, info_log);
         printf("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n %s\n", info_log);
     }
 
-    glShaderSource(fragment_shader, 1, &fragment_shader_src, NULL);
+    glShaderSource(fragment_shader, 1, &fragment_shader_src, nullptr);
     glCompileShader(fragment_shader);
     glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
     if(!success) {
-        glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
+        glGetShaderInfoLog(fragment_shader, 512, nullptr, info_log);
         printf("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n %s\n", info_log);
     }
 
@@ -45,18 +45,36 @@ Shader::Shader(const std::string& vPath, const std::string& fPath)
     free((char*)vertex_shader_src);
     free((char*)fragment_shader_src);
 
-    m_id = program;
-    m_uniformModel = GetUniformLocation("u_model");
-    m_uniformView = GetUniformLocation("u_view");
-    m_uniformProjection = GetUniformLocation("u_projection");
+    return program;
 }
 
-Shader::~Shader()
+void DeleteShader(Shader& shader)
 {
-    glDeleteProgram(m_id);
+    glDeleteProgram(shader);
+    shader = 0;
 }
 
-const char* Shader::ReadFile(const std::string& path) const
+void UseShader(Shader shader)
+{
+    glUseProgram(shader);
+}
+
+Uniform GetUniformLoc(Shader shader, const std::string& uniform)
+{
+    return glGetUniformLocation(shader, uniform.c_str());
+}
+
+void SetUniformMat4(Uniform location, const GLfloat* values)
+{
+    glUniformMatrix4fv(location, 1, GL_FALSE, values);
+}
+
+void SetUniformVec3(Uniform location, const GLfloat* values)
+{
+    glUniform3fv(location, 1, values);
+}
+
+const char* ReadFile(const std::string& path)
 {
     char* buffer = nullptr;
     size_t size = 0;
@@ -75,31 +93,6 @@ const char* Shader::ReadFile(const std::string& path) const
     buffer[size] = '\0';
 
     return buffer;
-}
-
-GLuint Shader::GetUniformLocation(const std::string& uniform) const
-{
-    return glGetUniformLocation(m_id, uniform.c_str());
-}
-
-void Shader::Enable() const
-{
-    glUseProgram(m_id);
-}
-
-void Shader::Disable() const
-{
-    glUseProgram(0);
-}
-
-void Shader::SetUniformMat4(GLuint location, const GLfloat* values) const
-{
-    glUniformMatrix4fv(location, 1, GL_FALSE, values);
-}
-
-void Shader::SetUniformVec3(GLuint location, const GLfloat* values) const
-{
-    glUniform3fv(location, 1, values);
 }
 
 } // namespace Graphics

@@ -1,13 +1,13 @@
 
 #include <GLFW/glfw3.h>
-#include "znga.h"
+#include "Znga.h"
+#include "Shader.h"
+#include "Texture.h"
+#include "Mesh.h"
+#include "Cube.h"
+#include "Model.h"
+#include "Terrain.h"
 #include "linmath.h"
-#include "znga_shader.h"
-#include "znga_texture.h"
-#include "znga_mesh.h"
-#include "znga_cube.h"
-#include "znga_model.h"
-#include "znga_terrain.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +20,8 @@ float time_delta = 0.0f;
 float time_last = 0.0f;
 
 // camera system
-vec3 camera_pos = {350.0f, 20.0f, 350.0f};
+//vec3 camera_pos = {350.0f, 20.0f, 350.0f};
+vec3 camera_pos = {0.0f, 20.0f, 0.0f};
 vec3 camera_front = {0.0f, 0.0f, -1.0f};
 vec3 camera_up = {0.0f, 1.0f, 0.0f};
 float camera_last_x = 1920.0f / 2.0f;
@@ -50,33 +51,24 @@ static void glfw_error_callback(int error, const char* desc)
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
 
-    if (key == GLFW_KEY_F && action == GLFW_PRESS)
-    {
-        if (!fill_mode_line)
-        {
+    if (key == GLFW_KEY_F && action == GLFW_PRESS) {
+        if (!fill_mode_line) {
             fill_mode_line = true;
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        }
-        else 
-        {
+        } else {
             fill_mode_line = false;
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     }
     
-    if (key == GLFW_KEY_C && action == GLFW_PRESS)
-    {
-        if (!camera_free)
-        {
+    if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+        if (!camera_free) {
             camera_free = true;
-        }
-        else 
-        {
+        } else {
             camera_free = false;
         }
     }
@@ -84,8 +76,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos)
 {
-    if (first_mouse)
-    {
+    if (first_mouse) {
         camera_last_x = x_pos;
         camera_last_y = y_pos;
         first_mouse = false;
@@ -103,12 +94,9 @@ static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos)
     camera_yaw += x_offset;
     camera_pitch += y_offset;
 
-    if (camera_pitch > 89.0f)
-    {
+    if (camera_pitch > 89.0f) {
         camera_pitch = 89.0f;
-    }
-    else if (camera_pitch < -89.0f)
-    {
+    } else if (camera_pitch < -89.0f) {
         camera_pitch = -89.0f;
     }
 
@@ -122,39 +110,34 @@ static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos)
 
 static void process_input(GLFWwindow* window)
 {
-    const float camera_speed = 100.0f * time_delta;
+    const float camera_speed = 10.0f * time_delta;
     vec3 tmp;
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    {
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         vec3_scale(tmp, camera_front, camera_speed);
         vec3_add(camera_pos, camera_pos, tmp);
     }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    {
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         vec3_scale(tmp, camera_front, camera_speed);
         vec3_sub(camera_pos, camera_pos, tmp);
     }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    {
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
         vec3_mul_cross(tmp, camera_front, camera_up);
         vec3_norm(tmp, tmp);
         vec3_scale(tmp, tmp, camera_speed);
         vec3_sub(camera_pos, camera_pos, tmp);
     }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    {
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         vec3_mul_cross(tmp, camera_front, camera_up);
         vec3_norm(tmp, tmp);
         vec3_scale(tmp, tmp, camera_speed);
         vec3_add(camera_pos, camera_pos, tmp);
     }
 
-    if (!camera_free)
-    {
-        //float x = camera_pos[0];
-        //float z = camera_pos[2];
-        //float y = terrain_height[(int)x * terrain_size + (int)z] + 1;
-        //camera_pos[1] = y;
+    if (!camera_free) {
+        float x = camera_pos[0];
+        float z = camera_pos[2];
+        float y = terrain_height[(int)x * terrain_size + (int)z] + 1;
+        camera_pos[1] = y;
     }
 }
 
@@ -162,8 +145,7 @@ int main(int argc, char* argv[])
 {
     printf("znga version %s\n", ZNGA_VERSION);
 
-    if (!glfwInit())
-    {
+    if (!glfwInit()) {
         printf("Failed to initialize glfw\n");
         return 0;
     }
@@ -181,12 +163,11 @@ int main(int argc, char* argv[])
     glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-    const int width = 1920;
-    const int height = 1080;
+    const int width = 1920/2;
+    const int height = 1080/2;
 
     window = glfwCreateWindow(width, height, "znga", NULL, NULL);
-    if (!window) 
-    {
+    if (!window) {
         printf("Failed to create glfw window\n");
         return 0;
     }
@@ -199,65 +180,43 @@ int main(int argc, char* argv[])
     glfwSetCursorPosCallback(window, mouse_callback);
 
     glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
-
-    Shader shader(
-        "/Users/markl/Dev/znga/shaders/flat.vert",
-        "/Users/markl/Dev/znga/shaders/flat.frag"
-    );
-
-//    Model* cube = new Model("/Users/markl/Dev/znga/models/cube.obj");
-//    cube.meshes[0].material.shader = shader;
-//    vec3 color = {1.0f, 0.5f, 0.31f};
-//    memcpy(cube.meshes[0].material.color, color, sizeof(vec3));
-
-    shader.Enable();
+    glEnable(GL_DEPTH_TEST);
+    glCullFace(GL_BACK);
 
     mat4x4 projection, view;
     mat4x4_identity(projection);
     mat4x4_identity(view);
-
     mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 100000.0f);
 
-    // Create a few model instances
-/*    mat4x4 transform;
-    mat4x4_identity(transform);
-    mat4x4_translate(transform, 32.0f, 6.0f, 32.0f);
-    znga_model_instance_t model_instance_1 = znga_model_create_instance(&cube, transform);
-    mat4x4_translate(transform, 38.0f, 4.0f, 38.0f);
-    znga_model_instance_t model_instance_2 = znga_model_create_instance(&cube, transform);
-    mat4x4_translate(transform, 42.0f, 2.0f, 42.0f);
-    znga_model_instance_t model_instance_3 = znga_model_create_instance(&cube, transform);
-    */
-
-    // Setup the light
     vec3 light_dir = {0.0f, -1.0f, -1.0f};
     vec3 light_color = {.75f, .75f, .75f};
 
-    // Terrain
-    Mesh* terrain_mesh = CreateSmoothTerrain(terrain_size, shader);
+    Shader shader = LoadShader(
+        "/Users/markl/Dev/znga/shaders/flat.vert",
+        "/Users/markl/Dev/znga/shaders/flat.frag"
+    );
+
+    Uniform uniformModel = GetUniformLoc(shader, "u_model");
+    Uniform uniformView = GetUniformLoc(shader, "u_view");
+    Uniform uniformProjection = GetUniformLoc(shader, "u_projection");
+    Uniform uniformLightDir = GetUniformLoc(shader, "u_light_dir");
+    Uniform uniformLightColor = GetUniformLoc(shader, "u_light_color");
+    Uniform uniformObjectColor = GetUniformLoc(shader, "u_object_color");
+
+    UseShader(shader);
+
+    SetUniformMat4(uniformProjection, (GLfloat*)projection);
+    SetUniformMat4(uniformView, (GLfloat*)view);
+    SetUniformVec3(uniformLightDir, (GLfloat*)light_dir);
+    SetUniformVec3(uniformLightColor, (GLfloat*)light_color);
+
+    Mesh terrain_mesh = CreateSmoothTerrain(terrain_size);
     mat4x4 terrain_transform;
     mat4x4_identity(terrain_transform);
-    //mat4x4_scale(terrain_transform, terrain_transform, 5.0f);
-    //mat4x4_translate(terrain_transform, -64.0f, -4.0f, -128);
-    MeshInstance terrain_mesh_instance(terrain_mesh, terrain_transform);
+    //vec3 terrain_color = {87.0f/255.0f, 59.0f/255.0f, 12.0f/255.0};
+    vec3 terrain_color = {128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0};
 
-    GLuint uniformModel = shader.GetUniformLocation("u_model");
-    GLuint uniformView = shader.GetUniformLocation("u_view");
-    GLuint uniformProjection = shader.GetUniformLocation("u_projection");
-    GLuint uniformLightDir = shader.GetUniformLocation("u_light_dir");
-    GLuint uniformLightColor = shader.GetUniformLocation("u_light_color");
-    GLuint uniformObjectColor = shader.GetUniformLocation("u_object_color");
-
-    shader.SetUniformMat4(uniformProjection, (GLfloat*)projection);
-    shader.SetUniformMat4(uniformView, (GLfloat*)view);
-    shader.SetUniformVec3(uniformLightDir, (GLfloat*)light_dir);
-    shader.SetUniformVec3(uniformLightColor, (GLfloat*)light_color);
-
-    glEnable(GL_DEPTH_TEST);
-    glCullFace(GL_BACK);
-
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         float time_current = glfwGetTime();
         time_delta = time_current - time_last;
         time_last = time_current;
@@ -269,7 +228,30 @@ int main(int argc, char* argv[])
         vec3 center;
         vec3_add(center, camera_pos, camera_front);
         mat4x4_look_at(view, camera_pos, center , camera_up);
-        shader.SetUniformMat4(uniformView, (GLfloat*)view);
+        SetUniformMat4(uniformView, (GLfloat*)view);
+
+        SetUniformVec3(uniformObjectColor, (GLfloat*)terrain_color);
+        SetUniformMat4(uniformModel, (GLfloat*)terrain_transform);
+        RenderMesh(terrain_mesh);
+
+        GLenum err;
+        while ((err = glGetError()) != GL_NO_ERROR) {
+            printf("OpenGL error: %u\n", err);
+        }
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    DeleteMesh(terrain_mesh);
+
+    glfwDestroyWindow(window);
+
+    glfwTerminate();
+
+    return 0;
+}
+
 
 /*
         mat4x4_rotate_X(model_instance_1.transform,
@@ -286,24 +268,18 @@ int main(int argc, char* argv[])
         znga_model_draw_instance(&model_instance_3);
 */
 
-        terrain_mesh_instance.Render();
 
-        GLenum err;
-        while ((err = glGetError()) != GL_NO_ERROR)
-        {
-            printf("OpenGL error: %u\n", err);
-        }
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
-
-    //delete cube;
-    delete terrain_mesh;
-
-    glfwDestroyWindow(window);
-
-    glfwTerminate();
-
-    return 0;
-}
+/*
+    Model* cube = new Model("/Users/markl/Dev/znga/models/cube.obj");
+    cube.meshes[0].material.shader = shader;
+    vec3 color = {1.0f, 0.5f, 0.31f};
+    memcpy(cube.meshes[0].material.color, color, sizeof(vec3));
+    mat4x4 transform;
+    mat4x4_identity(transform);
+    mat4x4_translate(transform, 32.0f, 6.0f, 32.0f);
+    znga_model_instance_t model_instance_1 = znga_model_create_instance(&cube, transform);
+    mat4x4_translate(transform, 38.0f, 4.0f, 38.0f);
+    znga_model_instance_t model_instance_2 = znga_model_create_instance(&cube, transform);
+    mat4x4_translate(transform, 42.0f, 2.0f, 42.0f);
+    znga_model_instance_t model_instance_3 = znga_model_create_instance(&cube, transform);
+*/

@@ -1,4 +1,4 @@
-#include "znga_model.h"
+#include "Model.h"
 #include "assimp/cimport.h"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
@@ -58,12 +58,10 @@ Model::Model(const std::string& path)
         }
     }
 
-    Material material;
-    Mesh* mesh = new Mesh(vertices, indices, material);
-
+    Mesh mesh = CreateMesh(vertices, indices);
     m_meshes.push_back(mesh);
 
-    printf("num_meshes: %u\n", m_meshes.size());
+    printf("num_meshes: %lu\n", m_meshes.size());
     printf("Loaded model: %s\n", path.c_str());
 
     aiReleaseImport(scene);
@@ -71,18 +69,16 @@ Model::Model(const std::string& path)
 
 Model::~Model()
 {
-    for (Mesh* m : m_meshes) {
-        delete m;
+    for (Mesh& m : m_meshes) {
+        DeleteMesh(m);
     }
     m_meshes.clear();
 }
 
 void Model::Render() const 
 {
-    for (Mesh* m : m_meshes) {
-        if (m) {
-            m->Render();
-        }
+    for (const Mesh& m : m_meshes) {
+        RenderMesh(m);
     }
 }
 

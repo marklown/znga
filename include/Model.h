@@ -1,7 +1,7 @@
 #ifndef ZNGA_MODEL_H
 #define ZNGA_MODEL_H
 
-#include "znga_mesh.h"
+#include "Mesh.h"
 #include "linmath.h"
 
 #include <string>
@@ -20,7 +20,7 @@ public:
     unsigned int GetNumberOfMeshes() const { return m_meshes.size(); }
 
 private:
-    std::vector<Mesh*> m_meshes;
+    std::vector<Mesh> m_meshes;
 };
 
 class ModelInstance

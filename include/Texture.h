@@ -15,9 +15,9 @@ struct Texture
 {
     GLuint id = 0;
     uint8_t type = DIFFUSE_MAP;
-
-    void Load(const std::string& path, uint8_t type);
 };
+
+Texture LoadTexture(const std::string& path, uint8_t type);
 
 } // namespace Graphics
 } // namespace Znga
