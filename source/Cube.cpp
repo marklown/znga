@@ -1,4 +1,5 @@
 #include "Cube.h"
+#include <random>
 
 namespace Znga {
 namespace Graphics {
@@ -78,10 +79,13 @@ void CreateMeshForChunk(ChunkData& chunk)
     std::vector<Vertex> vertices;
     vertices.reserve(36 * CHUNK_LIST_SIZE);
 
-    // Loop over all blocks in the chunk
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_SIZE; k++) {
+
+                int x = i + chunk.world_pos[0];
+                int y = j + chunk.world_pos[1];
+                int z = k + chunk.world_pos[2];
 
                 int index = Flatten(i, j, k, CHUNK_SIZE);
 
@@ -91,50 +95,101 @@ void CreateMeshForChunk(ChunkData& chunk)
 
                 if (i < CHUNK_SIZE - 1) {
                     int rightIndex = Flatten(i + 1, j, k, CHUNK_SIZE);
-                    if (AIR != chunk.blocks[rightIndex]) {
-                        vertices.insert(vertices.end(), &Right[0], &Right[6]);
+                    if (AIR == chunk.blocks[rightIndex]) {
+                        RightV(vertices, x, y, z);
                     }
-                } 
+                } else {
+                    RightV(vertices, x, y, z);
+                }
 
                 if (i > 0) {
                     int leftIndex = Flatten(i - 1, j, k, CHUNK_SIZE);
-                    if (AIR != chunk.blocks[leftIndex]) {
-                        vertices.insert(vertices.end(), &Left[0], &Left[6]);
+                    if (AIR == chunk.blocks[leftIndex]) {
+                        LeftV(vertices, x, y, z);
                     }
-                } 
+                } else {
+                    LeftV(vertices, x, y, z);
+                }
 
                 if (j < CHUNK_SIZE - 1) {
                     int topIndex = Flatten(i, j + 1, k, CHUNK_SIZE);
-                    if (AIR != chunk.blocks[topIndex]) {
-                        vertices.insert(vertices.end(), &Top[0], &Top[6]);
+                    if (AIR == chunk.blocks[topIndex]) {
+                        TopV(vertices, x, y, z);
                     }
-                } 
+                } else {
+                    TopV(vertices, x, y, z);
+                }
 
                 if (j > 0) {
                     int botIndex = Flatten(i, j - 1, k, CHUNK_SIZE);
-                    if (AIR != chunk.blocks[botIndex]) {
-                        vertices.insert(vertices.end(), &Bottom[0], &Bottom[6]);
+                    if (AIR == chunk.blocks[botIndex]) {
+                        BottomV(vertices, x, y, z);
                     }
-                } 
+                } else {
+                    BottomV(vertices, x, y, z);
+                }
 
                 if (k < CHUNK_SIZE - 1) {
                     int frontIndex = Flatten(i, j, k + 1, CHUNK_SIZE);
-                    if (AIR != chunk.blocks[frontIndex]) {
-                        vertices.insert(vertices.end(), &Front[0], &Front[6]);
+                    if (AIR == chunk.blocks[frontIndex]) {
+                        FrontV(vertices, x, y, z);
                     }
-                } 
+                } else {
+                    FrontV(vertices, x, y, z);
+                }
 
                 if (k > 0) {
                     int backIndex = Flatten(i, j, k - 1, CHUNK_SIZE);
-                    if (AIR != chunk.blocks[backIndex]) {
-                        vertices.insert(vertices.end(), &Back[0], &Back[6]);
+                    if (AIR == chunk.blocks[backIndex]) {
+                        BackV(vertices, x, y, z);
                     }
-                } 
+                } else {
+                    BackV(vertices, x, y, z);
+                }
             }
         }
     }
 
     chunk.mesh = CreateMesh(vertices);
+    chunk.updateMesh = false;
+}
+
+void GenerateWorld(WorldData& world)
+{
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> dist(0, 3);
+
+    for (int i = 0; i < WORLD_SIZE; i++) {
+        for (int j = 0; j < WORLD_SIZE; j++) {
+            for (int k = 0; k < WORLD_SIZE; k++) {
+                ChunkData& chunk = world.chunks[Flatten(i, j, k, WORLD_SIZE)];
+                chunk.world_pos[0] = i * CHUNK_SIZE;
+                chunk.world_pos[1] = j * CHUNK_SIZE;
+                chunk.world_pos[2] = k * CHUNK_SIZE;
+                for (int x = 0; x < CHUNK_SIZE; x++) {
+                    for (int y = 0; y < CHUNK_SIZE; y++) {
+                        for (int z = 0; z < CHUNK_SIZE; z++) {
+                            int type = dist(generator);
+                            chunk.blocks[Flatten(x, y, z, CHUNK_SIZE)] = (BlockType)type;
+                        }
+                    }
+                }
+                CreateMeshForChunk(chunk);
+            }
+        }
+    }
+}
+
+void RenderWorld(WorldData& world)
+{
+    for (int i = 0; i < WORLD_SIZE; i++) {
+        for (int j = 0; j < WORLD_SIZE; j++) {
+            for (int k = 0; k < WORLD_SIZE; k++) {
+                const ChunkData& chunk = world.chunks[Flatten(i, j, k, WORLD_SIZE)];
+                RenderMesh(chunk.mesh);
+            }
+        }
+    }
 }
 
 }

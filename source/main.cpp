@@ -20,8 +20,7 @@ float time_delta = 0.0f;
 float time_last = 0.0f;
 
 // camera system
-//vec3 camera_pos = {350.0f, 20.0f, 350.0f};
-vec3 camera_pos = {0.0f, 20.0f, 0.0f};
+vec3 camera_pos = {CHUNK_SIZE/2.0f, CHUNK_SIZE+10.0f, CHUNK_SIZE+10.0f};
 vec3 camera_front = {0.0f, 0.0f, -1.0f};
 vec3 camera_up = {0.0f, 1.0f, 0.0f};
 float camera_last_x = 1920.0f / 2.0f;
@@ -30,12 +29,6 @@ float camera_yaw = -90.0f;
 float camera_pitch = 0.0f;
 bool first_mouse = true;
 bool camera_free = true;
-
-// fog
-float fog_density = 0.3f;
-vec4 fog_color = {.5f, .5f, .5f, 1.0f};
-
-
 
 bool fill_mode_line = false;
 
@@ -181,15 +174,15 @@ int main(int argc, char* argv[])
 
     glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-    glCullFace(GL_BACK);
+    //glCullFace(GL_BACK);
 
     mat4x4 projection, view;
     mat4x4_identity(projection);
     mat4x4_identity(view);
     mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 100000.0f);
 
-    vec3 light_dir = {0.0f, -1.0f, -1.0f};
-    vec3 light_color = {.75f, .75f, .75f};
+    vec3 light_dir = {.5f, -.5f, .5f};
+    vec3 light_color = {255.0/255.0f, 255.0/255.0f, 251.0/255.0f};
 
     Shader shader = LoadShader(
         "/Users/markl/Dev/znga/shaders/flat.vert",
@@ -210,11 +203,13 @@ int main(int argc, char* argv[])
     SetUniformVec3(uniformLightDir, (GLfloat*)light_dir);
     SetUniformVec3(uniformLightColor, (GLfloat*)light_color);
 
-    Mesh terrain_mesh = CreateSmoothTerrain(terrain_size);
+    //Mesh terrain_mesh = CreateSmoothTerrain(terrain_size);
     mat4x4 terrain_transform;
     mat4x4_identity(terrain_transform);
-    //vec3 terrain_color = {87.0f/255.0f, 59.0f/255.0f, 12.0f/255.0};
     vec3 terrain_color = {128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0};
+
+    WorldData* world = new WorldData;
+    GenerateWorld(*world);
 
     while (!glfwWindowShouldClose(window)) {
         float time_current = glfwGetTime();
@@ -232,7 +227,9 @@ int main(int argc, char* argv[])
 
         SetUniformVec3(uniformObjectColor, (GLfloat*)terrain_color);
         SetUniformMat4(uniformModel, (GLfloat*)terrain_transform);
-        RenderMesh(terrain_mesh);
+        //RenderMesh(terrain_mesh);
+        //RenderMesh(chunk.mesh);
+        RenderWorld(*world);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR) {
@@ -243,7 +240,8 @@ int main(int argc, char* argv[])
         glfwPollEvents();
     }
 
-    DeleteMesh(terrain_mesh);
+    //DeleteMesh(terrain_mesh);
+    delete world;
 
     glfwDestroyWindow(window);
 

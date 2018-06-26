@@ -22,7 +22,7 @@ void main()
     //vec3 light_dir = normalize(light_pos - pos);
     vec3 light_dir = normalize(-u_light_dir);
     float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = diff * u_light_color;
+    vec3 diffuse = diff * u_light_color * 0.9;
 
     // specular
     float specular_strength = 0.0;
