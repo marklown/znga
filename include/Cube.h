@@ -131,9 +131,6 @@ const Vertex Cube[] = {
 };
 
 using BlockType = uint8_t;
-
-// XXXX0000 is light value
-// 0000XXXX is light color
 using Light = uint8_t;
 
 const BlockType AIR = 0;
@@ -215,36 +212,40 @@ inline Chunk& GetChunk(World& world, unsigned int x, unsigned int y, unsigned in
     return chunk;
 }
 
-inline void SetSunlight(World& world, unsigned int x, unsigned int y, unsigned int z, int val)
+inline void SetSunlight(World& world, unsigned int x, unsigned int y, unsigned int z, Light val)
 {
     unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
     unsigned int block_index = WorldPosToBlockIndex(x, y, z);
     Chunk& chunk = world.chunks[chunk_index];
-    chunk.sun_light[block_index] = (chunk.sun_light[block_index] & 0xF) | (val << 4);
+    //chunk.sun_light[block_index] = (chunk.sun_light[block_index] & 0xF) | (val << 4);
+    chunk.sun_light[block_index] = val;
 }
 
-inline int GetSunlight(World& world, unsigned int x, unsigned int y, unsigned int z)
+inline Light GetSunlight(World& world, unsigned int x, unsigned int y, unsigned int z)
 {
     unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
     unsigned int block_index = WorldPosToBlockIndex(x, y, z);
     Chunk& chunk = world.chunks[chunk_index];
-    return (chunk.sun_light[block_index] >> 4) & 0xF;
+    //return (chunk.sun_light[block_index] >> 4) & 0xF;
+    return chunk.sun_light[block_index];
 }
 
-inline void SetTorchlight(World& world, unsigned int x, unsigned int y, unsigned int z, int val)
+inline void SetTorchlight(World& world, unsigned int x, unsigned int y, unsigned int z, Light val)
 {
     unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
     unsigned int block_index = WorldPosToBlockIndex(x, y, z);
     Chunk& chunk = world.chunks[chunk_index];
-    chunk.torch_light[block_index] = (chunk.torch_light[block_index] & 0xF) | (val << 4);
+    //chunk.torch_light[block_index] = (chunk.torch_light[block_index] & 0xF) | (val << 4);
+    chunk.torch_light[block_index] = val;
 }
 
-inline int GetTorchlight(World& world, unsigned int x, unsigned int y, unsigned int z)
+inline Light GetTorchlight(World& world, unsigned int x, unsigned int y, unsigned int z)
 {
     unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
     unsigned int block_index = WorldPosToBlockIndex(x, y, z);
     Chunk& chunk = world.chunks[chunk_index];
-    return (chunk.torch_light[block_index] >> 4) & 0xF;
+    //return (chunk.torch_light[block_index] >> 4) & 0xF;
+    return chunk.torch_light[block_index];
 }
 
 void PlaceTorch(World& world, unsigned int x, unsigned int y, unsigned int z);
