@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
     mat4x4_identity(terrain_transform);
     vec3 terrain_color = {128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0};
 
-    WorldData* world = new WorldData;
+    World* world = new World;
     GenerateWorld(*world);
 
     while (!glfwWindowShouldClose(window)) {

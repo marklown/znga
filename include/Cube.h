@@ -3,6 +3,7 @@
 #define ZNGA_CUBE_H
 
 #include "Mesh.h"
+#include <cassert>
 
 namespace Znga {
 namespace Graphics {
@@ -131,6 +132,10 @@ const Vertex Cube[] = {
 
 using BlockType = uint8_t;
 
+// XXXX0000 is light value
+// 0000XXXX is light color
+using Light = uint8_t;
+
 const BlockType AIR = 0;
 const BlockType DIRT = 1;
 const BlockType SAND = 2;
@@ -142,32 +147,91 @@ const unsigned int WORLD_SIZE = 1;
 const unsigned int CHUNK_LIST_SIZE = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
 const unsigned int WORLD_LIST_SIZE = WORLD_SIZE * WORLD_SIZE * WORLD_SIZE;
 
-struct ChunkData
+struct Chunk
 {
     BlockType blocks[CHUNK_LIST_SIZE];
-    bool updateMesh = true;
-    Mesh mesh;
+    Light torch_light[CHUNK_LIST_SIZE];
+    Light sun_light[CHUNK_LIST_SIZE];
     int world_pos[3] = {0, 0, 0};
+    Mesh mesh;
 };
 
-struct WorldData
+struct World
 {
-    ChunkData chunks[WORLD_LIST_SIZE];
+    Chunk chunks[WORLD_LIST_SIZE];
 };
 
-BlockType GetBlockAtWorldPos(const WorldData& world, float x, float y, float z);
+struct LightNode
+{
+    LightNode(unsigned int idx, Chunk& chnk) : index(idx), chunk(chnk) {}
+    unsigned int index;
+    Chunk& chunk;
+};
 
-bool UpdateMeshForChunkAtWorldPos(WorldData& world, float x, float y, float z);
+void GenerateWorld(World& world);
 
-void CreateMeshForChunk(ChunkData& chunk);
+void RenderWorld(World& world);
 
-inline int Flatten(int x, int y, int z, int size)
+void CreateMeshForChunk(Chunk& chunk);
+
+inline unsigned int Flatten(unsigned int x, unsigned int y, unsigned int z, unsigned int size)
 {
     return x + y * size + z * size * size;
 }
 
-void GenerateWorld(WorldData& world);
-void RenderWorld(WorldData& world);
+inline unsigned int WorldPosToChunkIndex(unsigned int wx, unsigned int wy, unsigned int wz)
+{
+    unsigned int x = wx / CHUNK_SIZE;
+    unsigned int y = wy / CHUNK_SIZE;
+    unsigned int z = wz / CHUNK_SIZE;
+    unsigned int index = Flatten(x, y, z, WORLD_SIZE);
+    assert(index < WORLD_LIST_SIZE);
+    return index;
+}
+
+inline unsigned int WorldPosToBlockIndex(unsigned int wx, unsigned int wy, unsigned int wz)
+{
+    unsigned int x = wx % CHUNK_SIZE;
+    unsigned int y = wy % CHUNK_SIZE;
+    unsigned int z = wz % CHUNK_SIZE;
+    unsigned int index = Flatten(x, y, z, CHUNK_SIZE);
+    assert(index < CHUNK_LIST_SIZE);
+    return index;
+}
+
+inline void SetSunlight(World& world, unsigned int x, unsigned int y, unsigned int z, int val)
+{
+    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
+    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
+    Chunk& chunk = world.chunks[chunk_index];
+    chunk.sun_light[block_index] = (chunk.sun_light[block_index] & 0xF) | (val << 4);
+}
+
+inline int GetSunlight(World& world, unsigned int x, unsigned int y, unsigned int z)
+{
+    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
+    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
+    Chunk& chunk = world.chunks[chunk_index];
+    return (chunk.sun_light[block_index] >> 4) & 0xF;
+}
+
+inline void SetTorchlight(World& world, unsigned int x, unsigned int y, unsigned int z, int val)
+{
+    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
+    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
+    Chunk& chunk = world.chunks[chunk_index];
+    chunk.torch_light[block_index] = (chunk.torch_light[block_index] & 0xF) | (val << 4);
+}
+
+inline int GetTorchlight(World& world, unsigned int x, unsigned int y, unsigned int z)
+{
+    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
+    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
+    Chunk& chunk = world.chunks[chunk_index];
+    return (chunk.torch_light[block_index] >> 4) & 0xF;
+}
+
+void PlaceTorch(World& world, unsigned int x, unsigned int y, unsigned int z);
 
 
 }

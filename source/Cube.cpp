@@ -1,80 +1,12 @@
 #include "Cube.h"
 #include <random>
+#include <queue>
 
 namespace Znga {
 namespace Graphics {
 
-int WorldPosToChunkIndex(int wX, int wY, int wZ)
-{
-    int x = wX / CHUNK_SIZE;
-    int y = wY / CHUNK_SIZE;
-    int z = wZ / CHUNK_SIZE;
 
-    int index = x + y * WORLD_SIZE + z * WORLD_SIZE * WORLD_SIZE;
-
-    if (index > WORLD_LIST_SIZE) {
-        return -1;
-    }
-
-    return index;
-}
-
-int WorldPosToBlockIndex(int wX, int wY, int wZ)
-{
-    int x = wX % CHUNK_SIZE;
-    int y = wY % CHUNK_SIZE;
-    int z = wZ % CHUNK_SIZE;
-
-    int index = x + y * CHUNK_SIZE + z * CHUNK_SIZE * CHUNK_SIZE; 
-
-    if (index > CHUNK_LIST_SIZE) {
-        return -1;
-    }
-
-    return index;
-}
-
-BlockType GetBlockAtWorldPos(const WorldData& world, float fx, float fy, float fz)
-{
-    int x = (int)fx;
-    int y = (int)fy;
-    int z = (int)fz;
-
-    // Find the chunk at this world pos
-    int chunkIndex = WorldPosToChunkIndex(x, y, z);
-    if (chunkIndex < 0) {
-        return AIR;
-    }
-
-    // Look up the BlockType
-    int blockIndex = WorldPosToBlockIndex(x, y, z);
-    if (blockIndex < 0) {
-        return AIR;
-    }
-    return world.chunks[chunkIndex].blocks[blockIndex];
-}
-
-bool UpdateMeshForChunkAtWorldPos(WorldData& world, float fx, float fy, float fz)
-{
-    int x = (int)fx;
-    int y = (int)fy;
-    int z = (int)fz;
-
-    int chunkIndex = WorldPosToChunkIndex(x, y, z);
-    if (chunkIndex < 0) {
-        return false;
-    }
-
-    ChunkData& chunk = world.chunks[chunkIndex];
-
-    if (chunk.updateMesh) {
-        CreateMeshForChunk(chunk);
-    }
-
-    return true;
-}
-
-void CreateMeshForChunk(ChunkData& chunk)
+void CreateMeshForChunk(Chunk& chunk)
 {
     std::vector<Vertex> vertices;
     vertices.reserve(36 * CHUNK_LIST_SIZE);
@@ -151,24 +83,25 @@ void CreateMeshForChunk(ChunkData& chunk)
     }
 
     chunk.mesh = CreateMesh(vertices);
-    chunk.updateMesh = false;
 }
 
-void GenerateWorld(WorldData& world)
+void GenerateWorld(World& world)
 {
     std::default_random_engine generator;
     std::uniform_int_distribution<int> dist(0, 3);
 
-    for (int i = 0; i < WORLD_SIZE; i++) {
-        for (int j = 0; j < WORLD_SIZE; j++) {
-            for (int k = 0; k < WORLD_SIZE; k++) {
-                ChunkData& chunk = world.chunks[Flatten(i, j, k, WORLD_SIZE)];
+    for (unsigned int i = 0; i < WORLD_SIZE; i++) {
+        for (unsigned int j = 0; j < WORLD_SIZE; j++) {
+            for (unsigned int k = 0; k < WORLD_SIZE; k++) {
+                Chunk& chunk = world.chunks[Flatten(i, j, k, WORLD_SIZE)];
+                memset(chunk.sun_light, 0, sizeof(chunk.sun_light));
+                memset(chunk.torch_light, 0, sizeof(chunk.torch_light));
                 chunk.world_pos[0] = i * CHUNK_SIZE;
                 chunk.world_pos[1] = j * CHUNK_SIZE;
                 chunk.world_pos[2] = k * CHUNK_SIZE;
-                for (int x = 0; x < CHUNK_SIZE; x++) {
-                    for (int y = 0; y < CHUNK_SIZE; y++) {
-                        for (int z = 0; z < CHUNK_SIZE; z++) {
+                for (unsigned int x = 0; x < CHUNK_SIZE; x++) {
+                    for (unsigned int y = 0; y < CHUNK_SIZE; y++) {
+                        for (unsigned int z = 0; z < CHUNK_SIZE; z++) {
                             int type = dist(generator);
                             chunk.blocks[Flatten(x, y, z, CHUNK_SIZE)] = (BlockType)type;
                         }
@@ -180,17 +113,42 @@ void GenerateWorld(WorldData& world)
     }
 }
 
-void RenderWorld(WorldData& world)
+void RenderWorld(World& world)
 {
-    for (int i = 0; i < WORLD_SIZE; i++) {
-        for (int j = 0; j < WORLD_SIZE; j++) {
-            for (int k = 0; k < WORLD_SIZE; k++) {
-                const ChunkData& chunk = world.chunks[Flatten(i, j, k, WORLD_SIZE)];
+    for (unsigned int i = 0; i < WORLD_SIZE; i++) {
+        for (unsigned int j = 0; j < WORLD_SIZE; j++) {
+            for (unsigned int k = 0; k < WORLD_SIZE; k++) {
+                const Chunk& chunk = world.chunks[Flatten(i, j, k, WORLD_SIZE)];
                 RenderMesh(chunk.mesh);
             }
         }
     }
 }
+
+void PlaceTorch(World& world, unsigned int x, unsigned int y, unsigned int z)
+{
+    std::queue<LightNode> queue;
+
+    SetTorchlight(world, x, y, z, 14);
+
+    unsigned int index = Flatten(x, y, z, CHUNK_SIZE);
+    queue.emplace(index, world.chunks[index]);
+
+    while (!queue.empty()) {
+        LightNode& node = queue.front();
+        index = node.index;
+        Chunk& chunk = node.chunk;
+        queue.pop();
+        unsigned int z = index % CHUNK_SIZE;
+        unsigned int y = index / (CHUNK_SIZE * CHUNK_SIZE);
+        unsigned int x = (index % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE;
+
+        Light light_level = GetTorchlight(world, x, y, z);
+    }
+
+
+}
+
 
 }
 }
