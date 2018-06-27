@@ -199,6 +199,22 @@ inline unsigned int WorldPosToBlockIndex(unsigned int wx, unsigned int wy, unsig
     return index;
 }
 
+inline BlockType GetBlock(World& world, unsigned int x, unsigned int y, unsigned int z)
+{
+    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
+    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
+    Chunk& chunk = world.chunks[chunk_index];
+    return chunk.blocks[block_index];
+}
+
+inline Chunk& GetChunk(World& world, unsigned int x, unsigned int y, unsigned int z)
+{
+    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
+    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
+    Chunk& chunk = world.chunks[chunk_index];
+    return chunk;
+}
+
 inline void SetSunlight(World& world, unsigned int x, unsigned int y, unsigned int z, int val)
 {
     unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);

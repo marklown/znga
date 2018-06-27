@@ -208,8 +208,11 @@ int main(int argc, char* argv[])
     mat4x4_identity(terrain_transform);
     vec3 terrain_color = {128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0};
 
-    World* world = new World;
-    GenerateWorld(*world);
+    World* world_ptr = new World;
+    World& world = *world_ptr;
+    GenerateWorld(world);
+
+    PlaceTorch(world, 0, CHUNK_SIZE - 1, 0);
 
     while (!glfwWindowShouldClose(window)) {
         float time_current = glfwGetTime();
@@ -229,7 +232,7 @@ int main(int argc, char* argv[])
         SetUniformMat4(uniformModel, (GLfloat*)terrain_transform);
         //RenderMesh(terrain_mesh);
         //RenderMesh(chunk.mesh);
-        RenderWorld(*world);
+        RenderWorld(world);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR) {
@@ -241,7 +244,7 @@ int main(int argc, char* argv[])
     }
 
     //DeleteMesh(terrain_mesh);
-    delete world;
+    delete world_ptr;
 
     glfwDestroyWindow(window);
 

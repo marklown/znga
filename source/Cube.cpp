@@ -144,6 +144,62 @@ void PlaceTorch(World& world, unsigned int x, unsigned int y, unsigned int z)
         unsigned int x = (index % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE;
 
         Light light_level = GetTorchlight(world, x, y, z);
+
+        if (x > 0 && x < WORLD_SIZE * CHUNK_SIZE - 1) {
+            // Left neighbor
+            if ((GetBlock(world, x - 1, y, z) < DIRT) &&
+                (GetTorchlight(world, x - 1, y, z) + 2 <= light_level)) {
+                    SetTorchlight(world, x - 1, y, z, light_level - 1);
+                    index = Flatten(x - 1, y, z, CHUNK_SIZE);
+                    queue.emplace(index, GetChunk(world, x - 1, y, z));
+            }
+
+            // Right neighbor
+            if ((GetBlock(world, x + 1, y, z) < DIRT) &&
+                (GetTorchlight(world, x + 1, y, z) + 2 <= light_level)) {
+                    SetTorchlight(world, x + 1, y, z, light_level - 1);
+                    index = Flatten(x + 1, y, z, CHUNK_SIZE);
+                    queue.emplace(index, GetChunk(world, x + 1, y, z));
+            }
+        }
+
+        if (y > 0 && y < WORLD_SIZE * CHUNK_SIZE - 1) {
+            // Bottom neighbor
+            if ((GetBlock(world, x, y - 1, z) < DIRT) &&
+                (GetTorchlight(world, x, y - 1, z) + 2 <= light_level)) {
+                    SetTorchlight(world, x, y - 1, z, light_level - 1);
+                    index = Flatten(x, y - 1, z, CHUNK_SIZE);
+                    queue.emplace(index, GetChunk(world, x, y - 1, z));
+            }
+
+            // Top neighbor
+            if ((GetBlock(world, x, y + 1, z) < DIRT) &&
+                (GetTorchlight(world, x, y + 1, z) + 2 <= light_level)) {
+                    SetTorchlight(world, x, y + 1, z, light_level - 1);
+                    index = Flatten(x, y + 1, z, CHUNK_SIZE);
+                    queue.emplace(index, GetChunk(world, x, y + 1, z));
+            }
+
+        }
+
+        if (z > 0 && z < WORLD_SIZE * CHUNK_SIZE - 1) {
+            // Back neighbor
+            if ((GetBlock(world, x, y, z - 1) < DIRT) &&
+                (GetTorchlight(world, x, y, z - 1) + 2 <= light_level)) {
+                    SetTorchlight(world, x, y, z - 1, light_level - 1);
+                    index = Flatten(x, y, z - 1, CHUNK_SIZE);
+                    queue.emplace(index, GetChunk(world, x, y, z - 1));
+            }
+
+            // Front neighbor
+            if ((GetBlock(world, x, y, z + 1) < DIRT) &&
+                (GetTorchlight(world, x, y, z + 1) + 2 <= light_level)) {
+                    SetTorchlight(world, x, y, z + 1, light_level - 1);
+                    index = Flatten(x, y, z + 1, CHUNK_SIZE);
+                    queue.emplace(index, GetChunk(world, x, y, z + 1));
+            }
+
+        }
     }
 
 
