@@ -173,7 +173,8 @@ int main(int argc, char* argv[])
     glfwSetCursorPosCallback(window, mouse_callback);
 
     //glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    //glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClearColor(0.f, 0.f, 0.f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     //glCullFace(GL_BACK);
 
@@ -213,6 +214,7 @@ int main(int argc, char* argv[])
     World& world = *world_ptr;
     GenerateWorld(world);
     PlaceTorch(world, CHUNK_SIZE/2 - 1, CHUNK_SIZE - 1, CHUNK_SIZE/2 - 1);
+    //PlaceTorch(world, 6, CHUNK_SIZE - 1, 6);
     UpdateWorld(world);
 
     while (!glfwWindowShouldClose(window)) {

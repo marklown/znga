@@ -138,7 +138,7 @@ const BlockType DIRT = 1;
 const BlockType SAND = 2;
 const BlockType STONE = 3;
 
-const unsigned int CHUNK_SIZE = 16;
+const unsigned int CHUNK_SIZE = 32;
 const unsigned int WORLD_SIZE = 1;
 
 const unsigned int CHUNK_LIST_SIZE = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
@@ -146,7 +146,7 @@ const unsigned int WORLD_LIST_SIZE = WORLD_SIZE * WORLD_SIZE * WORLD_SIZE;
 
 struct Chunk
 {
-    BlockType blocks[CHUNK_SIZE];
+    BlockType blocks[CHUNK_LIST_SIZE];
     Light torch_light[CHUNK_LIST_SIZE];
     Light sun_light[CHUNK_LIST_SIZE];
     int world_pos[3] = {0, 0, 0};
@@ -180,7 +180,7 @@ void PlaceTorch(World& world, unsigned int wx, unsigned int wy, unsigned int wz)
 
 inline unsigned int Flatten(unsigned int x, unsigned int y, unsigned int z, unsigned int size)
 {
-    return x + y * size + z * size * size;
+    return x + (y * size) + (z * size * size);
 }
 
 inline unsigned int WorldPosToChunkIndex(unsigned int wx, unsigned int wy, unsigned int wz)

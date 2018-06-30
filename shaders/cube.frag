@@ -8,7 +8,8 @@ out vec4 final_color;
 
 void main()
 {
-    vec4 color = vec4(.5, .5, .5, 1.0); 
+    //vec4 color = vec4(.5, .5, .5, 1.0); 
+    vec4 color = vec4(0, .5, .5, 1.0); 
     //vec4 color = texture(u_texture, uv);
     float ambient = 0.2;
     vec3 lit = min(1.0, ambient + (light_map[0] + light_map[2])/14.0) * color.rgb;

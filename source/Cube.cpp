@@ -15,7 +15,6 @@ void CreateMeshForChunk(World& world, Chunk& chunk)
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_SIZE; k++) {
 
-
                 int x = i + chunk.world_pos[0];
                 int y = j + chunk.world_pos[1];
                 int z = k + chunk.world_pos[2];
@@ -122,6 +121,8 @@ void GenerateWorld(World& world)
                     for (unsigned int y = 0; y < CHUNK_SIZE; y++) {
                         for (unsigned int z = 0; z < CHUNK_SIZE; z++) {
                             if (y == CHUNK_SIZE - 1) {
+                                chunk.blocks[Flatten(x, y, z, CHUNK_SIZE)] = AIR;
+                            } else if (y > CHUNK_SIZE-CHUNK_SIZE/4 && x < CHUNK_SIZE/3) {
                                 chunk.blocks[Flatten(x, y, z, CHUNK_SIZE)] = AIR;
                             } else {
                                 unsigned int type = dist(generator);
