@@ -35,6 +35,10 @@ Mesh CreateMesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& 
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(GLfloat) * 6));
 
+    // vertex light map
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(GLfloat) * 8));
+
     glBindVertexArray(0);
 
     return mesh;

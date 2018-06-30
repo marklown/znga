@@ -26,6 +26,7 @@ struct Vertex
     GLfloat position[3];
     GLfloat normal[3];
     GLfloat tex_coord[2];
+    GLfloat light_map[4];
 };
 
 struct Mesh 

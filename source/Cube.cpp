@@ -6,7 +6,7 @@ namespace Znga {
 namespace Graphics {
 
 
-void CreateMeshForChunk(Chunk& chunk)
+void CreateMeshForChunk(World& world, Chunk& chunk)
 {
     std::vector<Vertex> vertices;
     vertices.reserve(36 * CHUNK_LIST_SIZE);
@@ -14,6 +14,7 @@ void CreateMeshForChunk(Chunk& chunk)
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_SIZE; k++) {
+
 
                 int x = i + chunk.world_pos[0];
                 int y = j + chunk.world_pos[1];
@@ -25,58 +26,76 @@ void CreateMeshForChunk(Chunk& chunk)
                     continue;
                 }
 
-                if (i < CHUNK_SIZE - 1) {
-                    int rightIndex = Flatten(i + 1, j, k, CHUNK_SIZE);
-                    if (AIR == chunk.blocks[rightIndex]) {
-                        RightV(vertices, x, y, z);
+                if (x > 0) {
+                    // Left neighbor
+                    if (AIR == GetBlock(world, x - 1, y, z)) {
+                        GLfloat torch = (GLfloat)GetTorchlight(world, x - 1, y, z);
+                        vec4 light_map = {torch, 0.f, 0.f, 0.f};
+                        LeftV(vertices, x, y, z, light_map);
                     }
                 } else {
-                    RightV(vertices, x, y, z);
+                    vec4 light_map = {0.2, 0, 0, 0};
+                    LeftV(vertices, x, y, z, light_map);
                 }
 
-                if (i > 0) {
-                    int leftIndex = Flatten(i - 1, j, k, CHUNK_SIZE);
-                    if (AIR == chunk.blocks[leftIndex]) {
-                        LeftV(vertices, x, y, z);
+                if (x < WORLD_SIZE * CHUNK_SIZE - 1) {
+                    // Right neighbor
+                    if (AIR == GetBlock(world, x + 1, y, z)) {
+                        GLfloat torch = (GLfloat)GetTorchlight(world, x + 1, y, z);
+                        vec4 light_map = {torch, 0.f, 0.f, 0.f};
+                        RightV(vertices, x, y, z, light_map);
                     }
                 } else {
-                    LeftV(vertices, x, y, z);
+                    vec4 light_map = {0.2, 0, 0, 0};
+                    RightV(vertices, x, y, z, light_map);
                 }
 
-                if (j < CHUNK_SIZE - 1) {
-                    int topIndex = Flatten(i, j + 1, k, CHUNK_SIZE);
-                    if (AIR == chunk.blocks[topIndex]) {
-                        TopV(vertices, x, y, z);
+                if (y > 0) {
+                    // Bottom neighbor
+                    if (AIR == GetBlock(world, x, y - 1, z)) {
+                        GLfloat torch = (GLfloat)GetTorchlight(world, x, y - 1, z);
+                        vec4 light_map = {torch, 0.f, 0.f, 0.f};
+                        BottomV(vertices, x, y, z, light_map);
                     }
                 } else {
-                    TopV(vertices, x, y, z);
+                    vec4 light_map = {0.2, 0, 0, 0};
+                    BottomV(vertices, x, y, z, light_map);
+                }
+                
+                if (y < WORLD_SIZE * CHUNK_SIZE - 1) {
+                    // Top neighbor
+                    if (AIR == GetBlock(world, x, y + 1, z)) {
+                        GLfloat torch = (GLfloat)GetTorchlight(world, x, y + 1, z);
+                        vec4 light_map = {torch, 0.f, 0.f, 0.f};
+                        TopV(vertices, x, y, z, light_map);
+                    }
+                } else {
+                    vec4 light_map = {0.2, 0, 0, 0};
+                    TopV(vertices, x, y, z, light_map);
                 }
 
-                if (j > 0) {
-                    int botIndex = Flatten(i, j - 1, k, CHUNK_SIZE);
-                    if (AIR == chunk.blocks[botIndex]) {
-                        BottomV(vertices, x, y, z);
+                if (z > 0) {
+                    // Back neighbor
+                    if (AIR == GetBlock(world, x, y, z - 1)) {
+                        GLfloat torch = (GLfloat)GetTorchlight(world, x, y, z - 1);
+                        vec4 light_map = {torch, 0.f, 0.f, 0.f};
+                        BackV(vertices, x, y, z, light_map);
                     }
                 } else {
-                    BottomV(vertices, x, y, z);
+                    vec4 light_map = {0.2, 0, 0, 0};
+                    BackV(vertices, x, y, z, light_map);
                 }
 
-                if (k < CHUNK_SIZE - 1) {
-                    int frontIndex = Flatten(i, j, k + 1, CHUNK_SIZE);
-                    if (AIR == chunk.blocks[frontIndex]) {
-                        FrontV(vertices, x, y, z);
+                if (z < WORLD_SIZE * CHUNK_SIZE - 1) {
+                    // Front neighbor
+                    if (AIR == GetBlock(world, x, y, z + 1)) {
+                        GLfloat torch = (GLfloat)GetTorchlight(world, x, y, z + 1);
+                        vec4 light_map = {torch, 0.f, 0.f, 0.f};
+                        FrontV(vertices, x, y, z, light_map);
                     }
                 } else {
-                    FrontV(vertices, x, y, z);
-                }
-
-                if (k > 0) {
-                    int backIndex = Flatten(i, j, k - 1, CHUNK_SIZE);
-                    if (AIR == chunk.blocks[backIndex]) {
-                        BackV(vertices, x, y, z);
-                    }
-                } else {
-                    BackV(vertices, x, y, z);
+                    vec4 light_map = {0.2, 0, 0, 0};
+                    FrontV(vertices, x, y, z, light_map);
                 }
             }
         }
@@ -88,7 +107,7 @@ void CreateMeshForChunk(Chunk& chunk)
 void GenerateWorld(World& world)
 {
     std::default_random_engine generator;
-    std::uniform_int_distribution<int> dist(0, 3);
+    std::uniform_int_distribution<unsigned int> dist(0, 3);
 
     for (unsigned int i = 0; i < WORLD_SIZE; i++) {
         for (unsigned int j = 0; j < WORLD_SIZE; j++) {
@@ -102,12 +121,16 @@ void GenerateWorld(World& world)
                 for (unsigned int x = 0; x < CHUNK_SIZE; x++) {
                     for (unsigned int y = 0; y < CHUNK_SIZE; y++) {
                         for (unsigned int z = 0; z < CHUNK_SIZE; z++) {
-                            int type = dist(generator);
-                            chunk.blocks[Flatten(x, y, z, CHUNK_SIZE)] = (BlockType)type;
+                            if (y == CHUNK_SIZE - 1) {
+                                chunk.blocks[Flatten(x, y, z, CHUNK_SIZE)] = AIR;
+                            } else {
+                                unsigned int type = dist(generator);
+                                //type = DIRT;
+                                chunk.blocks[Flatten(x, y, z, CHUNK_SIZE)] = (BlockType)type;
+                            }
                         }
                     }
                 }
-                CreateMeshForChunk(chunk);
             }
         }
     }
@@ -125,84 +148,91 @@ void RenderWorld(World& world)
     }
 }
 
-void PlaceTorch(World& world, unsigned int x, unsigned int y, unsigned int z)
+void UpdateWorld(World& world)
+{
+    for (unsigned int i = 0; i < WORLD_SIZE; i++) {
+        for (unsigned int j = 0; j < WORLD_SIZE; j++) {
+            for (unsigned int k = 0; k < WORLD_SIZE; k++) {
+                Chunk& chunk = world.chunks[Flatten(i, j, k, WORLD_SIZE)];
+                CreateMeshForChunk(world, chunk);
+            }
+        }
+    }
+}
+
+void PlaceTorch(World& world, unsigned int wx, unsigned int wy, unsigned int wz)
 {
     std::queue<LightNode> queue;
 
-    SetTorchlight(world, x, y, z, 14);
+    SetTorchlight(world, wx, wy, wz, 14);
 
-    unsigned int index = Flatten(x, y, z, CHUNK_SIZE);
-    queue.emplace(index, world.chunks[index]);
+    unsigned int index = Flatten(wx, wy, wz, CHUNK_SIZE);
+    queue.emplace(wx, wy, wz, world.chunks[index]);
 
     while (!queue.empty()) {
         LightNode& node = queue.front();
-        index = node.index;
         Chunk& chunk = node.chunk;
         queue.pop();
-        unsigned int z = index % CHUNK_SIZE;
-        unsigned int y = index / (CHUNK_SIZE * CHUNK_SIZE);
-        unsigned int x = (index % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE;
+        unsigned int x = node.x;
+        unsigned int y = node.y;
+        unsigned int z = node.z;
 
         Light light_level = GetTorchlight(world, x, y, z);
 
-        if (x > 0 && x < WORLD_SIZE * CHUNK_SIZE - 1) {
+        if (x > 0) {
             // Left neighbor
             if ((GetBlock(world, x - 1, y, z) < DIRT) &&
                 (GetTorchlight(world, x - 1, y, z) + 2 <= light_level)) {
                     SetTorchlight(world, x - 1, y, z, light_level - 1);
-                    index = Flatten(x - 1, y, z, CHUNK_SIZE);
-                    queue.emplace(index, GetChunk(world, x - 1, y, z));
+                    queue.emplace(x - 1, y, z, GetChunk(world, x - 1, y, z));
             }
+        }
 
+        if (x < WORLD_SIZE * CHUNK_SIZE - 1) {
             // Right neighbor
             if ((GetBlock(world, x + 1, y, z) < DIRT) &&
                 (GetTorchlight(world, x + 1, y, z) + 2 <= light_level)) {
                     SetTorchlight(world, x + 1, y, z, light_level - 1);
-                    index = Flatten(x + 1, y, z, CHUNK_SIZE);
-                    queue.emplace(index, GetChunk(world, x + 1, y, z));
+                    queue.emplace(x + 1, y, z, GetChunk(world, x + 1, y, z));
             }
         }
 
-        if (y > 0 && y < WORLD_SIZE * CHUNK_SIZE - 1) {
+        if (y > 0) {
             // Bottom neighbor
             if ((GetBlock(world, x, y - 1, z) < DIRT) &&
                 (GetTorchlight(world, x, y - 1, z) + 2 <= light_level)) {
                     SetTorchlight(world, x, y - 1, z, light_level - 1);
-                    index = Flatten(x, y - 1, z, CHUNK_SIZE);
-                    queue.emplace(index, GetChunk(world, x, y - 1, z));
+                    queue.emplace(x, y - 1, z, GetChunk(world, x, y - 1, z));
             }
-
+        }
+        
+        if (y < WORLD_SIZE * CHUNK_SIZE - 1) {
             // Top neighbor
             if ((GetBlock(world, x, y + 1, z) < DIRT) &&
                 (GetTorchlight(world, x, y + 1, z) + 2 <= light_level)) {
                     SetTorchlight(world, x, y + 1, z, light_level - 1);
-                    index = Flatten(x, y + 1, z, CHUNK_SIZE);
-                    queue.emplace(index, GetChunk(world, x, y + 1, z));
+                    queue.emplace(x, y + 1, z, GetChunk(world, x, y + 1, z));
             }
-
         }
 
-        if (z > 0 && z < WORLD_SIZE * CHUNK_SIZE - 1) {
+        if (z > 0) {
             // Back neighbor
             if ((GetBlock(world, x, y, z - 1) < DIRT) &&
                 (GetTorchlight(world, x, y, z - 1) + 2 <= light_level)) {
                     SetTorchlight(world, x, y, z - 1, light_level - 1);
-                    index = Flatten(x, y, z - 1, CHUNK_SIZE);
-                    queue.emplace(index, GetChunk(world, x, y, z - 1));
+                    queue.emplace(x, y, z - 1, GetChunk(world, x, y, z - 1));
             }
+        }
 
+        if (z < WORLD_SIZE * CHUNK_SIZE - 1) {
             // Front neighbor
             if ((GetBlock(world, x, y, z + 1) < DIRT) &&
                 (GetTorchlight(world, x, y, z + 1) + 2 <= light_level)) {
                     SetTorchlight(world, x, y, z + 1, light_level - 1);
-                    index = Flatten(x, y, z + 1, CHUNK_SIZE);
-                    queue.emplace(index, GetChunk(world, x, y, z + 1));
+                    queue.emplace(x, y, z + 1, GetChunk(world, x, y, z + 1));
             }
-
         }
     }
-
-
 }
 
 

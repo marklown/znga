@@ -156,8 +156,8 @@ int main(int argc, char* argv[])
     glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-    const int width = 1920/2;
-    const int height = 1080/2;
+    const int width = 1920/1.5;
+    const int height = 1080/1.5;
 
     window = glfwCreateWindow(width, height, "znga", NULL, NULL);
     if (!window) {
@@ -172,7 +172,8 @@ int main(int argc, char* argv[])
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-    glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
+    //glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     //glCullFace(GL_BACK);
 
@@ -181,27 +182,27 @@ int main(int argc, char* argv[])
     mat4x4_identity(view);
     mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 100000.0f);
 
-    vec3 light_dir = {.5f, -.5f, .5f};
-    vec3 light_color = {255.0/255.0f, 255.0/255.0f, 251.0/255.0f};
+    //vec3 light_dir = {.5f, -.5f, .5f};
+    //vec3 light_color = {255.0/255.0f, 255.0/255.0f, 251.0/255.0f};
 
     Shader shader = LoadShader(
-        "/Users/markl/Dev/znga/shaders/flat.vert",
-        "/Users/markl/Dev/znga/shaders/flat.frag"
+        "/Users/markl/Dev/znga/shaders/cube.vert",
+        "/Users/markl/Dev/znga/shaders/cube.frag"
     );
 
     Uniform uniformModel = GetUniformLoc(shader, "u_model");
     Uniform uniformView = GetUniformLoc(shader, "u_view");
     Uniform uniformProjection = GetUniformLoc(shader, "u_projection");
-    Uniform uniformLightDir = GetUniformLoc(shader, "u_light_dir");
-    Uniform uniformLightColor = GetUniformLoc(shader, "u_light_color");
-    Uniform uniformObjectColor = GetUniformLoc(shader, "u_object_color");
+    //Uniform uniformLightDir = GetUniformLoc(shader, "u_light_dir");
+    //Uniform uniformLightColor = GetUniformLoc(shader, "u_light_color");
+    //Uniform uniformObjectColor = GetUniformLoc(shader, "u_object_color");
 
     UseShader(shader);
 
     SetUniformMat4(uniformProjection, (GLfloat*)projection);
     SetUniformMat4(uniformView, (GLfloat*)view);
-    SetUniformVec3(uniformLightDir, (GLfloat*)light_dir);
-    SetUniformVec3(uniformLightColor, (GLfloat*)light_color);
+    //SetUniformVec3(uniformLightDir, (GLfloat*)light_dir);
+    //SetUniformVec3(uniformLightColor, (GLfloat*)light_color);
 
     //Mesh terrain_mesh = CreateSmoothTerrain(terrain_size);
     mat4x4 terrain_transform;
@@ -211,8 +212,8 @@ int main(int argc, char* argv[])
     World* world_ptr = new World;
     World& world = *world_ptr;
     GenerateWorld(world);
-
-    PlaceTorch(world, 0, CHUNK_SIZE - 1, 0);
+    PlaceTorch(world, CHUNK_SIZE/2 - 1, CHUNK_SIZE - 1, CHUNK_SIZE/2 - 1);
+    UpdateWorld(world);
 
     while (!glfwWindowShouldClose(window)) {
         float time_current = glfwGetTime();
@@ -228,7 +229,7 @@ int main(int argc, char* argv[])
         mat4x4_look_at(view, camera_pos, center , camera_up);
         SetUniformMat4(uniformView, (GLfloat*)view);
 
-        SetUniformVec3(uniformObjectColor, (GLfloat*)terrain_color);
+        //SetUniformVec3(uniformObjectColor, (GLfloat*)terrain_color);
         SetUniformMat4(uniformModel, (GLfloat*)terrain_transform);
         //RenderMesh(terrain_mesh);
         //RenderMesh(chunk.mesh);
