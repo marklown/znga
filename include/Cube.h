@@ -4,6 +4,7 @@
 
 #include "Mesh.h"
 #include <cassert>
+#include <map>
 
 namespace Znga {
 namespace Graphics {
@@ -130,127 +131,73 @@ const Vertex Cube[] = {
     {-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f}
 };
 
-using BlockType = unsigned short;
+using Block = unsigned short;
 using Light = unsigned short;
 
-const BlockType AIR = 0;
-const BlockType DIRT = 1;
-const BlockType SAND = 2;
-const BlockType STONE = 3;
+const Block AIR = 0;
+const Block DIRT = 1;
+const Block SAND = 2;
+const Block STONE = 3;
 
-const unsigned int CHUNK_SIZE = 32;
-const unsigned int WORLD_SIZE = 1;
-
-const unsigned int CHUNK_LIST_SIZE = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
-const unsigned int WORLD_LIST_SIZE = WORLD_SIZE * WORLD_SIZE * WORLD_SIZE;
+const int CHUNK_SIZE = 16;
+const int WORLD_SIZE_X = 2;
+const int WORLD_SIZE_Y = 1;
+const int WORLD_SIZE_Z = 1;
 
 struct Chunk
 {
-    BlockType blocks[CHUNK_LIST_SIZE];
-    Light torch_light[CHUNK_LIST_SIZE];
-    Light sun_light[CHUNK_LIST_SIZE];
+    Block blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+    Light pointlight[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+    Light sunlight[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
     int world_pos[3] = {0, 0, 0};
     Mesh mesh;
-    bool needs_update = true;
 };
 
-struct World
+class World
 {
-    Chunk chunks[WORLD_LIST_SIZE];
+public:
+
+    struct Key
+    {
+        Key(int ii, int jj, int kk) : i(ii), j(jj), k(kk) {}
+        int i = 0; int j = 0; int k = 0;
+    };
+
+    struct KeyCompare 
+    {
+        bool operator() (const Key& lhs, const Key& rhs) const {
+            return lhs.i < rhs.i && lhs.j < rhs.j && lhs.k < rhs.k;
+        }
+    };
+
+    void   Generate();
+    void   Update();
+    void   Render();
+
+    Chunk* GetChunk(const Key& key);
+    Chunk* GetChunk(int wx, int wy, int wz);
+    Chunk* AddChunk(const Key& key);
+    Chunk* AddChunk(int wx, int wy, int wz);
+    void   UpdateMesh(Chunk* chunk);
+
+    Block GetBlock(int wx, int wy, int wz);
+
+    Light GetPointlight(int wx, int wy, int wz);
+    void  SetPointlight(int wx, int wy, int wz, Light value);
+    void  PlacePointlight(int wx, int wy, int wz);
+    
+private:
+
+    std::map<Key, Chunk*, KeyCompare> chunks;
+
 };
 
 struct LightNode
 {
-    LightNode(unsigned int x, unsigned int y, unsigned int z, Chunk& chnk)
-        : x(x), y(y), z(z), chunk(chnk) {}
-    unsigned int x, y, z;
-    Chunk& chunk;
+    LightNode(int xx, int yy, int zz)
+        : x(xx), y(yy), z(zz) {}
+    int x, y, z;
 };
-
-
-void GenerateWorld(World& world);
-
-void UpdateWorld(World& world);
-
-void RenderWorld(World& world);
-
-void CreateMeshForChunk(World& world, Chunk& chunk);
-
-void PlaceTorch(World& world, unsigned int wx, unsigned int wy, unsigned int wz);
-
-inline unsigned int Flatten(unsigned int x, unsigned int y, unsigned int z, unsigned int size)
-{
-    return x + (y * size) + (z * size * size);
-}
-
-inline unsigned int WorldPosToChunkIndex(unsigned int wx, unsigned int wy, unsigned int wz)
-{
-    unsigned int x = wx / CHUNK_SIZE;
-    unsigned int y = wy / CHUNK_SIZE;
-    unsigned int z = wz / CHUNK_SIZE;
-    unsigned int index = Flatten(x, y, z, WORLD_SIZE);
-    assert(index < WORLD_LIST_SIZE);
-    return index;
-}
-
-inline unsigned int WorldPosToBlockIndex(unsigned int wx, unsigned int wy, unsigned int wz)
-{
-    unsigned int x = wx % CHUNK_SIZE;
-    unsigned int y = wy % CHUNK_SIZE;
-    unsigned int z = wz % CHUNK_SIZE;
-    unsigned int index = Flatten(x, y, z, CHUNK_SIZE);
-    assert(index < CHUNK_LIST_SIZE);
-    return index;
-}
-
-inline BlockType GetBlock(World& world, unsigned int x, unsigned int y, unsigned int z)
-{
-    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
-    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
-    Chunk& chunk = world.chunks[chunk_index];
-    return chunk.blocks[block_index];
-}
-
-inline Chunk& GetChunk(World& world, unsigned int x, unsigned int y, unsigned int z)
-{
-    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
-    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
-    Chunk& chunk = world.chunks[chunk_index];
-    return chunk;
-}
-
-inline void SetSunlight(World& world, unsigned int x, unsigned int y, unsigned int z, Light val)
-{
-    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
-    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
-    Chunk& chunk = world.chunks[chunk_index];
-    chunk.sun_light[block_index] = val;
-}
-
-inline Light GetSunlight(World& world, unsigned int x, unsigned int y, unsigned int z)
-{
-    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
-    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
-    Chunk& chunk = world.chunks[chunk_index];
-    return chunk.sun_light[block_index];
-}
-
-inline void SetTorchlight(World& world, unsigned int x, unsigned int y, unsigned int z, Light val)
-{
-    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
-    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
-    Chunk& chunk = world.chunks[chunk_index];
-    chunk.torch_light[block_index] = val;
-}
-
-inline Light GetTorchlight(World& world, unsigned int x, unsigned int y, unsigned int z)
-{
-    unsigned int chunk_index = WorldPosToChunkIndex(x, y, z);
-    unsigned int block_index = WorldPosToBlockIndex(x, y, z);
-    Chunk& chunk = world.chunks[chunk_index];
-    return chunk.torch_light[block_index];
-}
-
 
 }
 }

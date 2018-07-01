@@ -103,7 +103,7 @@ static void mouse_callback(GLFWwindow* window, double x_pos, double y_pos)
 
 static void process_input(GLFWwindow* window)
 {
-    const float camera_speed = 10.0f * time_delta;
+    const float camera_speed = 50.0f * time_delta;
     vec3 tmp;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         vec3_scale(tmp, camera_front, camera_speed);
@@ -156,8 +156,8 @@ int main(int argc, char* argv[])
     glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-    const int width = 1920/1.5;
-    const int height = 1080/1.5;
+    const int width = 1920;
+    const int height = 1080;
 
     window = glfwCreateWindow(width, height, "znga", NULL, NULL);
     if (!window) {
@@ -210,12 +210,10 @@ int main(int argc, char* argv[])
     mat4x4_identity(terrain_transform);
     vec3 terrain_color = {128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0};
 
-    World* world_ptr = new World;
-    World& world = *world_ptr;
-    GenerateWorld(world);
-    PlaceTorch(world, CHUNK_SIZE/2 - 1, CHUNK_SIZE - 1, CHUNK_SIZE/2 - 1);
-    //PlaceTorch(world, 6, CHUNK_SIZE - 1, 6);
-    UpdateWorld(world);
+    World world;
+    world.Generate();
+    world.PlacePointlight(CHUNK_SIZE/2 - 1, CHUNK_SIZE - 1, CHUNK_SIZE/2 - 1);
+    world.Update();
 
     while (!glfwWindowShouldClose(window)) {
         float time_current = glfwGetTime();
@@ -235,7 +233,7 @@ int main(int argc, char* argv[])
         SetUniformMat4(uniformModel, (GLfloat*)terrain_transform);
         //RenderMesh(terrain_mesh);
         //RenderMesh(chunk.mesh);
-        RenderWorld(world);
+        world.Render();
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR) {
@@ -246,8 +244,6 @@ int main(int argc, char* argv[])
         glfwPollEvents();
     }
 
-    //DeleteMesh(terrain_mesh);
-    delete world_ptr;
 
     glfwDestroyWindow(window);
 
