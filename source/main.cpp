@@ -20,7 +20,7 @@ float time_delta = 0.0f;
 float time_last = 0.0f;
 
 // camera system
-vec3 camera_pos = {CHUNK_SIZE/2.0f, CHUNK_SIZE+10.0f, CHUNK_SIZE+10.0f};
+vec3 camera_pos = {CHUNK_SIZE_X/2.0f, CHUNK_SIZE_Y+10.0f, CHUNK_SIZE_Z+20.0f};
 vec3 camera_front = {0.0f, 0.0f, -1.0f};
 vec3 camera_up = {0.0f, 1.0f, 0.0f};
 float camera_last_x = 1920.0f / 2.0f;
@@ -210,9 +210,11 @@ int main(int argc, char* argv[])
     mat4x4_identity(terrain_transform);
     vec3 terrain_color = {128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0};
 
+    Texture grass = LoadTexture("/Users/markl/Dev/znga/textures/stone.png", DIFFUSE_MAP);
+
     World world;
     world.Generate();
-    world.PlacePointlight(CHUNK_SIZE/2 - 1, CHUNK_SIZE - 1, CHUNK_SIZE/2 - 1);
+    //world.PlacePointlight(CHUNK_SIZE_X/2 - 1, CHUNK_SIZE_Y - 1, CHUNK_SIZE_Z/2 - 1);
     world.Update();
 
     while (!glfwWindowShouldClose(window)) {
@@ -233,6 +235,7 @@ int main(int argc, char* argv[])
         SetUniformMat4(uniformModel, (GLfloat*)terrain_transform);
         //RenderMesh(terrain_mesh);
         //RenderMesh(chunk.mesh);
+        glBindTexture(GL_TEXTURE_2D, grass.id);
         world.Render();
 
         GLenum err;

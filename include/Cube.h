@@ -139,16 +139,19 @@ const Block DIRT = 1;
 const Block SAND = 2;
 const Block STONE = 3;
 
-const int CHUNK_SIZE = 16;
-const int WORLD_SIZE_X = 2;
+const int CHUNK_SIZE_X = 32;
+const int CHUNK_SIZE_Y = 32;
+const int CHUNK_SIZE_Z = 32;
+
+const int WORLD_SIZE_X = 1;
 const int WORLD_SIZE_Y = 1;
 const int WORLD_SIZE_Z = 1;
 
 struct Chunk
 {
-    Block blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-    Light pointlight[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-    Light sunlight[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+    Block blocks[CHUNK_SIZE_X][CHUNK_SIZE_Y][CHUNK_SIZE_Z];
+    Light pointlight[CHUNK_SIZE_X][CHUNK_SIZE_Y][CHUNK_SIZE_Z];
+    Light sunlight[CHUNK_SIZE_X][CHUNK_SIZE_Y][CHUNK_SIZE_Z];
     int world_pos[3] = {0, 0, 0};
     Mesh mesh;
 };
@@ -157,38 +160,35 @@ class World
 {
 public:
 
-    struct Key
-    {
-        Key(int ii, int jj, int kk) : i(ii), j(jj), k(kk) {}
-        int i = 0; int j = 0; int k = 0;
-    };
-
-    struct KeyCompare 
-    {
-        bool operator() (const Key& lhs, const Key& rhs) const {
-            return lhs.i < rhs.i && lhs.j < rhs.j && lhs.k < rhs.k;
-        }
-    };
-
     void   Generate();
     void   Update();
     void   Render();
 
-    Chunk* GetChunk(const Key& key);
-    Chunk* GetChunk(int wx, int wy, int wz);
-    Chunk* AddChunk(const Key& key);
-    Chunk* AddChunk(int wx, int wy, int wz);
+    Chunk* GetChunkByPos(int x, int y, int z);
+    Chunk* AddChunkByPos(int x, int y, int z);
+    Chunk* GetChunkByIndex(int i, int j, int k);
+    Chunk* AddChunkByIndex(int i, int j, int k);
     void   UpdateMesh(Chunk* chunk);
 
-    Block GetBlock(int wx, int wy, int wz);
+    Block GetBlock(int x, int y, int z);
 
-    Light GetPointlight(int wx, int wy, int wz);
-    void  SetPointlight(int wx, int wy, int wz, Light value);
-    void  PlacePointlight(int wx, int wy, int wz);
+    Light GetPointlight(int x, int y, int z);
+    void  SetPointlight(int x, int y, int z, Light value);
+    void  PlacePointlight(int x, int y, int z);
+
+    Light GetSunlight(int x, int y, int z);
+    void  SetSunlight(int x, int y, int z, Light value);
+    void  PropogateSunlight(Chunk* chunk);
     
 private:
 
-    std::map<Key, Chunk*, KeyCompare> chunks;
+    int HashFromPos(int x, int y, int z);
+    int HashFromIndex(int i, int j, int k);
+
+    Chunk* GetChunk(int hash);
+    Chunk* AddChunk(int hash);
+
+    std::map<int, Chunk*> m_chunks;
 
 };
 
