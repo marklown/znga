@@ -74,6 +74,11 @@ void SetUniformVec3(Uniform location, const GLfloat* values)
     glUniform3fv(location, 1, values);
 }
 
+void SetUniform1f(Uniform location, const GLfloat value)
+{
+    glUniform1f(location, value);
+}
+
 const char* ReadFile(const std::string& path)
 {
     char* buffer = nullptr;

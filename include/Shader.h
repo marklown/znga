@@ -16,6 +16,7 @@ void UseShader(Shader shader);
 Uniform GetUniformLoc(Shader shader, const std::string& uniform);
 void SetUniformMat4(Uniform location, const GLfloat* values);
 void SetUniformVec3(Uniform location, const GLfloat* values);
+void SetUniform1f(Uniform location, const GLfloat value);
 
 const char* ReadFile(const std::string& path);
 

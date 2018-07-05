@@ -37,6 +37,8 @@ const unsigned int terrain_size = 256;
 
 static GLFWwindow* window = NULL;
 
+World world;
+
 static void glfw_error_callback(int error, const char* desc)
 {
     fprintf(stderr, "Error: %s\n", desc);
@@ -172,19 +174,18 @@ int main(int argc, char* argv[])
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-    //glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
-    //glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClearColor(0.f, 0.f, 0.f, 1.0f);
+    //glClearColor(0.f, 0.f, 0.f, 1.0f);
+    glClearColor(0.196078f, 0.6f, 0.8f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-    //glCullFace(GL_BACK);
+
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
 
     mat4x4 projection, view;
     mat4x4_identity(projection);
     mat4x4_identity(view);
     mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 100000.0f);
-
-    //vec3 light_dir = {.5f, -.5f, .5f};
-    //vec3 light_color = {255.0/255.0f, 255.0/255.0f, 251.0/255.0f};
 
     Shader shader = LoadShader(
         "/Users/markl/Dev/znga/shaders/cube.vert",
@@ -194,28 +195,25 @@ int main(int argc, char* argv[])
     Uniform uniformModel = GetUniformLoc(shader, "u_model");
     Uniform uniformView = GetUniformLoc(shader, "u_view");
     Uniform uniformProjection = GetUniformLoc(shader, "u_projection");
-    //Uniform uniformLightDir = GetUniformLoc(shader, "u_light_dir");
-    //Uniform uniformLightColor = GetUniformLoc(shader, "u_light_color");
-    //Uniform uniformObjectColor = GetUniformLoc(shader, "u_object_color");
+    Uniform uniformTimeOfDay = GetUniformLoc(shader, "u_time_of_day");
 
     UseShader(shader);
 
     SetUniformMat4(uniformProjection, (GLfloat*)projection);
     SetUniformMat4(uniformView, (GLfloat*)view);
-    //SetUniformVec3(uniformLightDir, (GLfloat*)light_dir);
-    //SetUniformVec3(uniformLightColor, (GLfloat*)light_color);
 
-    //Mesh terrain_mesh = CreateSmoothTerrain(terrain_size);
-    mat4x4 terrain_transform;
-    mat4x4_identity(terrain_transform);
-    vec3 terrain_color = {128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0};
+    mat4x4 worldTransform;
+    mat4x4_identity(worldTransform);
 
-    Texture grass = LoadTexture("/Users/markl/Dev/znga/textures/stone.png", DIFFUSE_MAP);
+    Texture grass = LoadTexture("/Users/markl/Dev/znga/textures/grass.png", DIFFUSE_MAP);
 
-    World world;
     world.Generate();
-    //world.PlacePointlight(CHUNK_SIZE_X/2 - 1, CHUNK_SIZE_Y - 1, CHUNK_SIZE_Z/2 - 1);
+//    world.PlacePointlight(4*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 4*CHUNK_SIZE_Z-1);
+//    world.PlacePointlight(2*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 6*CHUNK_SIZE_Z-1);
+//    world.PlacePointlight(6*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 2*CHUNK_SIZE_Z-1);
     world.Update();
+
+    SetUniform1f(uniformTimeOfDay, 1.0f);
 
     while (!glfwWindowShouldClose(window)) {
         float time_current = glfwGetTime();
@@ -231,10 +229,7 @@ int main(int argc, char* argv[])
         mat4x4_look_at(view, camera_pos, center , camera_up);
         SetUniformMat4(uniformView, (GLfloat*)view);
 
-        //SetUniformVec3(uniformObjectColor, (GLfloat*)terrain_color);
-        SetUniformMat4(uniformModel, (GLfloat*)terrain_transform);
-        //RenderMesh(terrain_mesh);
-        //RenderMesh(chunk.mesh);
+        SetUniformMat4(uniformModel, (GLfloat*)worldTransform);
         glBindTexture(GL_TEXTURE_2D, grass.id);
         world.Render();
 

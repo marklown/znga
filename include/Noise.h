@@ -1,68 +1,90 @@
-#include <stdio.h>
+#pragma once
 
-static int SEED = 0;
+#include "stb_perlin.h"
+#include "common.h"
 
-static int hash[] = {208,34,231,213,32,248,233,56,161,78,24,140,71,48,140,254,245,255,247,247,40,
-                     185,248,251,245,28,124,204,204,76,36,1,107,28,234,163,202,224,245,128,167,204,
-                     9,92,217,54,239,174,173,102,193,189,190,121,100,108,167,44,43,77,180,204,8,81,
-                     70,223,11,38,24,254,210,210,177,32,81,195,243,125,8,169,112,32,97,53,195,13,
-                     203,9,47,104,125,117,114,124,165,203,181,235,193,206,70,180,174,0,167,181,41,
-                     164,30,116,127,198,245,146,87,224,149,206,57,4,192,210,65,210,129,240,178,105,
-                     228,108,245,148,140,40,35,195,38,58,65,207,215,253,65,85,208,76,62,3,237,55,89,
-                     232,50,217,64,244,157,199,121,252,90,17,212,203,149,152,140,187,234,177,73,174,
-                     193,100,192,143,97,53,145,135,19,103,13,90,135,151,199,91,239,247,33,39,145,
-                     101,120,99,3,186,86,99,41,237,203,111,79,220,135,158,42,30,154,120,67,87,167,
-                     135,176,183,191,253,115,184,21,233,58,129,233,142,39,128,211,118,137,139,255,
-                     114,20,218,113,154,27,127,246,250,1,8,198,250,209,92,222,173,21,88,102,219};
+/*
+ * A C port of "OpenSimplex (Simplectic) Noise in Java".
+ * https://gist.github.com/KdotJPG/b1270127455a94ac5d19
+ *
+ * (v1.0.1 With new gradient set and corresponding normalization factor, 9/19/14)
+ *
+ * This is free and unencumbered software released into the public domain.
+ *
+ * Anyone is free to copy, modify, publish, use, compile, sell, or
+ * distribute this software, either in source code form or as a compiled
+ * binary, for any purpose, commercial or non-commercial, and by any
+ * means.
+ *
+ * In jurisdictions that recognize copyright laws, the author or authors
+ * of this software dedicate any and all copyright interest in the
+ * software to the public domain. We make this dedication for the benefit
+ * of the public at large and to the detriment of our heirs and
+ * successors. We intend this dedication to be an overt act of
+ * relinquishment in perpetuity of all present and future rights to this
+ * software under copyright law.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 
-int noise2(int x, int y)
+/* init the noise function using the given seed */
+void opensimplex_init(uint64_t seed);
+
+/* generate 2D, 3D, 4D noise data */
+double opensimplex_noise_2d(double x, double y);
+double opensimplex_noise_3d(double x, double y, double z);
+double opensimplex_noise_4d(double x, double y, double z, double w);
+
+/*
+ * A speed-improved simplex noise algorithm for 2D
+ *
+ * Based on example code by Stefan Gustavson (stegu@itn.liu.se).
+ * Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
+ * Better rank ordering method by Stefan Gustavson in 2012.
+ *
+ * This could be speeded up even further, but it's useful as it is.
+ *
+ * Version 2012-03-09
+ *
+ * This code was placed in the public domain by its original author,
+ * Stefan Gustavson. You may use it as you see fit, but
+ * attribution is appreciated.
+ *
+ */
+
+void simplex_init(uint64_t seed);
+double simplex_noise_2d(double x, double y);
+
+
+static inline
+double fbm_simplex_2d(double x, double y, double gain, double frequency, double lacunarity, int octaves)
 {
-    int tmp = hash[(y + SEED) % 256];
-    return hash[(tmp + x) % 256];
+	double sum = 0.0;
+	double amplitude = 1.0;
+	for (int i = 0; i < octaves; ++i) {
+		sum += simplex_noise_2d(x * frequency, y * frequency) * amplitude;
+		frequency *= lacunarity;
+		amplitude *= gain;
+	}
+	return sum;
 }
 
-float lin_inter(float x, float y, float s)
+
+static inline
+double fbm_opensimplex_3d(double x, double y, double z, double gain, double frequency, double lacunarity, int octaves)
 {
-    return x + s * (y-x);
-}
-
-float smooth_inter(float x, float y, float s)
-{
-    return lin_inter(x, y, s * s * (3-2*s));
-}
-
-float noise2d(float x, float y)
-{
-    int x_int = x;
-    int y_int = y;
-    float x_frac = x - x_int;
-    float y_frac = y - y_int;
-    int s = noise2(x_int, y_int);
-    int t = noise2(x_int+1, y_int);
-    int u = noise2(x_int, y_int+1);
-    int v = noise2(x_int+1, y_int+1);
-    float low = smooth_inter(s, t, x_frac);
-    float high = smooth_inter(u, v, x_frac);
-    return smooth_inter(low, high, y_frac);
-}
-
-float perlin2d(float x, float y, float freq, int depth)
-{
-    float xa = x*freq;
-    float ya = y*freq;
-    float amp = 1.0;
-    float fin = 0;
-    float div = 0.0;
-
-    int i;
-    for(i=0; i<depth; i++)
-    {
-        div += 256 * amp;
-        fin += noise2d(xa, ya) * amp;
-        amp /= 2;
-        xa *= 2;
-        ya *= 2;
-    }
-
-    return fin/div;
+	double sum = 0.0;
+	double amplitude = 1.0;
+	for (int i = 0; i < octaves; ++i) {
+		sum += opensimplex_noise_3d(x * frequency, y * frequency, z * frequency) * amplitude;
+		frequency *= lacunarity;
+		amplitude *= gain;
+	}
+	return sum;
 }

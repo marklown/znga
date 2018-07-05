@@ -14,7 +14,7 @@ out vec4 final_color;
 void main()
 {
     // ambient
-    float ambient_strength = 0.1;
+    float ambient_strength = 0.2;
     vec3 ambient = ambient_strength * u_light_color;
 
     // diffuse

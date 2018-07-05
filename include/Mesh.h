@@ -31,11 +31,11 @@ struct Vertex
 
 struct Mesh 
 {
-    GLuint vao;
-    GLuint vbo;
-    GLuint ebo;
-    GLuint numVertices;
-    GLuint numIndices;
+    GLuint vao = 0;
+    GLuint vbo = 0;
+    GLuint ebo = 0;
+    GLuint numVertices = 0;
+    GLuint numIndices = 0;
 };
 
 Mesh CreateMesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices);

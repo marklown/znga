@@ -22,7 +22,7 @@ Texture LoadTexture(const std::string& path, uint8_t type)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     int width, height, num_channels;
-    //stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(true);
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &num_channels, 0);
     if (!data) {
         printf("Failed to read texture file: %s\n", path.c_str());

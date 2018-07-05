@@ -1,4 +1,5 @@
 #include "Cube.h"
+#include "noise.h"
 #include <random>
 #include <queue>
 
@@ -81,6 +82,8 @@ void World::UpdateMesh(Chunk* chunk)
     std::vector<Vertex> vertices;
     vertices.reserve(36 * CHUNK_SIZE_X * CHUNK_SIZE_Y * CHUNK_SIZE_Z);
 
+    const GLfloat ao = 4.0;
+
     for (int i = 0; i < CHUNK_SIZE_X; i++) {
         for (int j = 0; j < CHUNK_SIZE_Y; j++) {
             for (int k = 0; k < CHUNK_SIZE_Z; k++) {
@@ -98,12 +101,10 @@ void World::UpdateMesh(Chunk* chunk)
                     if (AIR == GetBlock(x - 1, y, z)) {
                         GLfloat torch = (GLfloat)GetPointlight(x - 1, y, z);
                         GLfloat sun = (GLfloat)GetSunlight(x - 1, y, z);
+                        sun -= ao;
                         vec4 light_map = {torch, 0.f, sun, 0.f};
                         LeftV(vertices, x, y, z, light_map);
                     }
-                } else {
-                    vec4 light_map = {0, 0, 0, 0};
-                    LeftV(vertices, x, y, z, light_map);
                 }
 
                 if (x < WORLD_SIZE_X * CHUNK_SIZE_X - 1) {
@@ -111,12 +112,10 @@ void World::UpdateMesh(Chunk* chunk)
                     if (AIR == GetBlock(x + 1, y, z)) {
                         GLfloat torch = (GLfloat)GetPointlight(x + 1, y, z);
                         GLfloat sun = (GLfloat)GetSunlight(x + 1, y, z);
+                        sun -= ao;
                         vec4 light_map = {torch, 0.f, sun, 0.f};
                         RightV(vertices, x, y, z, light_map);
                     }
-                } else {
-                    vec4 light_map = {0, 0, 0, 0};
-                    RightV(vertices, x, y, z, light_map);
                 }
 
                 if (y > 0) {
@@ -127,9 +126,6 @@ void World::UpdateMesh(Chunk* chunk)
                         vec4 light_map = {torch, 0.f, sun, 0.f};
                         BottomV(vertices, x, y, z, light_map);
                     }
-                } else {
-                    vec4 light_map = {0, 0, 0, 0};
-                    BottomV(vertices, x, y, z, light_map);
                 }
                 
                 if (y < WORLD_SIZE_Y * CHUNK_SIZE_Y - 1) {
@@ -140,9 +136,6 @@ void World::UpdateMesh(Chunk* chunk)
                         vec4 light_map = {torch, 0.f, sun, 0.f};
                         TopV(vertices, x, y, z, light_map);
                     }
-                } else {
-                    vec4 light_map = {0, 0, 0, 0};
-                    TopV(vertices, x, y, z, light_map);
                 }
 
                 if (z > 0) {
@@ -150,12 +143,10 @@ void World::UpdateMesh(Chunk* chunk)
                     if (AIR == GetBlock(x, y, z - 1)) {
                         GLfloat torch = (GLfloat)GetPointlight(x, y, z - 1);
                         GLfloat sun = (GLfloat)GetSunlight(x, y, z - 1);
+                        sun -= ao;
                         vec4 light_map = {torch, 0.f, sun, 0.f};
                         BackV(vertices, x, y, z, light_map);
                     }
-                } else {
-                    vec4 light_map = {0, 0, 0, 0};
-                    BackV(vertices, x, y, z, light_map);
                 }
 
                 if (z < WORLD_SIZE_Z * CHUNK_SIZE_Z - 1) {
@@ -163,12 +154,10 @@ void World::UpdateMesh(Chunk* chunk)
                     if (AIR == GetBlock(x, y, z + 1)) {
                         GLfloat torch = (GLfloat)GetPointlight(x, y, z + 1);
                         GLfloat sun = (GLfloat)GetSunlight(x, y, z + 1);
+                        sun -= ao;
                         vec4 light_map = {torch, 0.f, sun, 0.f};
                         FrontV(vertices, x, y, z, light_map);
                     }
-                } else {
-                    vec4 light_map = {0, 0, 0, 0};
-                    FrontV(vertices, x, y, z, light_map);
                 }
             }
         }
@@ -179,8 +168,7 @@ void World::UpdateMesh(Chunk* chunk)
 
 void World::Generate()
 {
-    std::default_random_engine generator;
-    std::uniform_int_distribution<unsigned int> dist(0, 100);
+    opensimplex_init(41716);
 
     for (int i = 0; i < WORLD_SIZE_X; i++) {
         for (int j = 0; j < WORLD_SIZE_Y; j++) {
@@ -197,17 +185,30 @@ void World::Generate()
                 chunk->world_pos[2] = k * CHUNK_SIZE_Z;
 
                 for (int x = 0; x < CHUNK_SIZE_X; x++) {
-                    for (int y = 0; y < CHUNK_SIZE_Y; y++) {
-                        for (int z = 0; z < CHUNK_SIZE_Z; z++) {
-                            unsigned int r = dist(generator);
+                    for (int z = 0; z < CHUNK_SIZE_Z; z++) {
+
+                        double noise = 0;
+                        for (int pass = 1; pass <= 1; pass++) {
+                            double gain = 0.5;
+                            double freq = 0.0015 * pass;
+                            double lac = 2.0;
+                            int oct = 16;
+                            double n = fbm_simplex_2d(
+                                (double)(i * CHUNK_SIZE_X + x), (double)(k * CHUNK_SIZE_Z + z),
+                                gain, freq, lac, oct);
+                            noise += n;
+                        }
+                        if (noise < -1) noise = -1;
+                        else if (noise > 1) noise = 1;
+                        noise = (noise + 1) / 2;
+                        noise *= CHUNK_SIZE_Y;
+                        for (int y = 0; y < CHUNK_SIZE_Y; y++) {
                             if (y == CHUNK_SIZE_Y - 1){
                                 chunk->blocks[x][y][z] = AIR;
+                            } else if (y > noise) {
+                                chunk->blocks[x][y][z] = AIR;
                             } else {
-                                if (r < 75) {
-                                    chunk->blocks[x][y][z] = AIR;
-                                } else {
-                                    chunk->blocks[x][y][z] = DIRT;
-                                }
+                                chunk->blocks[x][y][z] = DIRT;
                             }
                         }
                     }
@@ -272,7 +273,7 @@ void World::PlacePointlight(int x, int y, int z)
     Chunk* chunk = GetChunkByPos(x, y, z);
     if (!chunk) return;
 
-    SetPointlight(x, y, z, 14);
+    SetPointlight(x, y, z, 32);
 
     queue.emplace(x, y, z);
 
@@ -379,10 +380,8 @@ void World::PropogateSunlight(Chunk* chunk)
         for (int k = 0; k < CHUNK_SIZE_Z; k++) {
             int j = CHUNK_SIZE_Y - 1;
             if (GetBlock(x + i, y + j, z + k) < DIRT) {
-                SetSunlight(x + i, y + j, z + k, 7);
+                SetSunlight(x + i, y + j, z + k, 14);
                 queue.emplace(x + i, y + j, z + k);
-            } else {
-                SetSunlight(x + i, y + j, z + k, 0);
             }
         }
     }
@@ -419,7 +418,7 @@ void World::PropogateSunlight(Chunk* chunk)
             if ((GetBlock(x, y - 1, z) < DIRT) &&
                 (GetSunlight(x, y - 1, z) + 2 <= light_level)) {
                     // Sunlight propogates straight down with no attenuation
-                    SetSunlight(x, y - 1, z, light_level /*- 1*/);
+                    SetSunlight(x, y - 1, z, light_level/* - 1*/);
                     queue.emplace(x, y - 1, z);
             }
         }
