@@ -77,7 +77,8 @@ struct LightNode
     int x, y, z;
 };
 
-inline void BackV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
+inline void BackFace_DIRT(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
     Vertex Back[] = {
         {x-0.5f, y-0.5f, z-0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, light[0], light[1], light[2], light[3]},
         {x+0.5f, y+0.5f, z-0.5f, 0.0f, 0.0f, -1.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
@@ -89,7 +90,8 @@ inline void BackV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
     v.insert(v.end(), &Back[0], &Back[6]);
 }
 
-inline void FrontV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
+inline void FrontFace_DIRT(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
     Vertex Front[] = {
         {x+0.5f, y+0.5f, z+0.5f, 0.0f, 0.0f, 1.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
         {x-0.5f, y-0.5f, z+0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, light[0], light[1], light[2], light[3]},
@@ -101,7 +103,8 @@ inline void FrontV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
     v.insert(v.end(), &Front[0], &Front[6]);
 }
 
-inline void LeftV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
+inline void LeftFace_DIRT(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
     Vertex Left[] = {
         {x-0.5f, y+0.5f, z+0.5f, -1.0f, 0.0f, 0.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
         {x-0.5f, y-0.5f, z-0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, light[0], light[1], light[2], light[3]},
@@ -113,7 +116,8 @@ inline void LeftV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
     v.insert(v.end(), &Left[0], &Left[6]);
 }
 
-inline void RightV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
+inline void RightFace_DIRT(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
     Vertex Right[] = {
         {x+0.5f, y-0.5f, z+0.5f, -1.0f, 0.0f, 0.0f, 0.5f, 0.0f, light[0], light[1], light[2], light[3]},
         {x+0.5f, y-0.5f, z-0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, light[0], light[1], light[2], light[3]},
@@ -125,7 +129,8 @@ inline void RightV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
     v.insert(v.end(), &Right[0], &Right[6]);
 }
 
-inline void BottomV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
+inline void BottomFace_DIRT(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
     Vertex Bottom[] = {
         {x+0.5f, y-0.5f, z+0.5f, 0.0f, -1.0f, 0.0f, 0.5f, 1.0f, light[0], light[1], light[2], light[3]},
         {x-0.5f, y-0.5f, z-0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.5f, light[0], light[1], light[2], light[3]},
@@ -137,7 +142,8 @@ inline void BottomV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
     v.insert(v.end(), &Bottom[0], &Bottom[6]);
 }
 
-inline void TopV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
+inline void TopFace_DIRT(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
     Vertex Top[] = {
         {x+0.5f, y+0.5f, z-0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.5f, light[0], light[1], light[2], light[3]},
         {x-0.5f, y+0.5f, z-0.5f, 0.0f, -1.0f, 0.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
@@ -148,6 +154,160 @@ inline void TopV(std::vector<Vertex>& v, int x, int y, int z, vec4 light) {
     };
     v.insert(v.end(), &Top[0], &Top[6]);
 }
+
+inline void BackFace_SAND(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
+    Vertex Back[] = {
+        {x-0.5f, y-0.5f, z-0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y+0.5f, z-0.5f, 0.0f, 0.0f, -1.0f, 0.5f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y-0.5f, z-0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y+0.5f, z-0.5f, 0.0f, 0.0f, -1.0f, 0.5f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y+0.5f, z-0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y-0.5f, z-0.5f, 0.0f, 0.0f, -1.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
+    };
+    v.insert(v.end(), &Back[0], &Back[6]);
+}
+
+inline void FrontFace_SAND(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
+    Vertex Front[] = {
+        {x+0.5f, y+0.5f, z+0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y-0.5f, z+0.5f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y-0.5f, z+0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y-0.5f, z+0.5f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y+0.5f, z+0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y+0.5f, z+0.5f, 0.0f, 0.0f, 1.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
+    };
+    v.insert(v.end(), &Front[0], &Front[6]);
+}
+
+inline void LeftFace_SAND(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
+    Vertex Left[] = {
+        {x-0.5f, y+0.5f, z+0.5f, -1.0f, 0.0f, 0.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y-0.5f, z-0.5f, -1.0f, 0.0f, 0.0f, 0.5f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y-0.5f, z+0.5f, -1.0f, 0.0f, 0.0f, 0.5f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y-0.5f, z-0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y+0.5f, z+0.5f, -1.0f, 0.0f, 0.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y+0.5f, z-0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.5f, light[0], light[1], light[2], light[3]},
+    };
+    v.insert(v.end(), &Left[0], &Left[6]);
+}
+
+inline void RightFace_SAND(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
+    Vertex Right[] = {
+        {x+0.5f, y-0.5f, z+0.5f, -1.0f, 0.0f, 0.0f, 0.5f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y-0.5f, z-0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y+0.5f, z+0.5f, -1.0f, 0.0f, 0.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y+0.5f, z-0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y+0.5f, z+0.5f, -1.0f, 0.0f, 0.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y-0.5f, z-0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, light[0], light[1], light[2], light[3]},
+    };
+    v.insert(v.end(), &Right[0], &Right[6]);
+}
+
+inline void BottomFace_SAND(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
+    Vertex Bottom[] = {
+        {x+0.5f, y-0.5f, z+0.5f, 0.0f, -1.0f, 0.0f, 0.5f, 1.0f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y-0.5f, z-0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y-0.5f, z-0.5f, 0.0f, -1.0f, 0.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y-0.5f, z-0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y-0.5f, z+0.5f, 0.0f, -1.0f, 0.0f, 0.5f, 1.0f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y-0.5f, z+0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, light[0], light[1], light[2], light[3]},
+    };
+    v.insert(v.end(), &Bottom[0], &Bottom[6]);
+}
+
+inline void TopFace_SAND(std::vector<Vertex>& v, int x, int y, int z, vec4 light)
+{
+    Vertex Top[] = {
+        {x+0.5f, y+0.5f, z-0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y+0.5f, z-0.5f, 0.0f, -1.0f, 0.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y+0.5f, z+0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y+0.5f, z+0.5f, 0.0f, -1.0f, 0.0f, 0.5f, 1.0f, light[0], light[1], light[2], light[3]},
+        {x+0.5f, y+0.5f, z+0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f, light[0], light[1], light[2], light[3]},
+        {x-0.5f, y+0.5f, z-0.5f, 0.0f, -1.0f, 0.0f, 0.5f, 0.5f, light[0], light[1], light[2], light[3]},
+    };
+    v.insert(v.end(), &Top[0], &Top[6]);
+}
+
+inline void BackV(std::vector<Vertex>& v, int x, int y, int z, vec4 light, Block type)
+{
+    switch (type) {
+        case DIRT:
+            BackFace_DIRT(v, x, y, z, light);
+            break;
+        case SAND:
+            BackFace_SAND(v, x, y, z, light);
+            break;
+    }
+}
+
+inline void FrontV(std::vector<Vertex>& v, int x, int y, int z, vec4 light, Block type)
+{
+    switch (type) {
+        case DIRT:
+            FrontFace_DIRT(v, x, y, z, light);
+            break;
+        case SAND:
+            FrontFace_SAND(v, x, y, z, light);
+            break;
+    }
+}
+
+inline void LeftV(std::vector<Vertex>& v, int x, int y, int z, vec4 light, Block type)
+{
+    switch (type) {
+        case DIRT:
+            LeftFace_DIRT(v, x, y, z, light);
+            break;
+        case SAND:
+            LeftFace_SAND(v, x, y, z, light);
+            break;
+    }
+}
+
+inline void RightV(std::vector<Vertex>& v, int x, int y, int z, vec4 light, Block type)
+{
+    switch (type) {
+        case DIRT:
+            RightFace_DIRT(v, x, y, z, light);
+            break;
+        case SAND:
+            RightFace_SAND(v, x, y, z, light);
+            break;
+    }
+}
+
+inline void BottomV(std::vector<Vertex>& v, int x, int y, int z, vec4 light, Block type)
+{
+    switch (type) {
+        case DIRT:
+            BottomFace_DIRT(v, x, y, z, light);
+            break;
+        case SAND:
+            BottomFace_SAND(v, x, y, z, light);
+            break;
+    }
+}
+
+inline void TopV(std::vector<Vertex>& v, int x, int y, int z, vec4 light, Block type)
+{
+    switch (type) {
+        case DIRT:
+            TopFace_DIRT(v, x, y, z, light);
+            break;
+        case SAND:
+            TopFace_SAND(v, x, y, z, light);
+            break;
+    }
+}
+
+
+
+
 }
 }
 

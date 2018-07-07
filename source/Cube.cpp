@@ -92,7 +92,8 @@ void World::UpdateMesh(Chunk* chunk)
                 int y = j + chunk->world_pos[1];
                 int z = k + chunk->world_pos[2];
 
-                if (AIR == chunk->blocks[i][j][k]) {
+                Block block_type = chunk->blocks[i][j][k];
+                if (AIR == block_type) {
                     continue;
                 }
 
@@ -103,7 +104,7 @@ void World::UpdateMesh(Chunk* chunk)
                         GLfloat sun = (GLfloat)GetSunlight(x - 1, y, z);
                         sun -= ao;
                         vec4 light_map = {torch, 0.f, sun, 0.f};
-                        LeftV(vertices, x, y, z, light_map);
+                        LeftV(vertices, x, y, z, light_map, block_type);
                     }
                 }
 
@@ -114,7 +115,7 @@ void World::UpdateMesh(Chunk* chunk)
                         GLfloat sun = (GLfloat)GetSunlight(x + 1, y, z);
                         sun -= ao;
                         vec4 light_map = {torch, 0.f, sun, 0.f};
-                        RightV(vertices, x, y, z, light_map);
+                        RightV(vertices, x, y, z, light_map, block_type);
                     }
                 }
 
@@ -124,7 +125,7 @@ void World::UpdateMesh(Chunk* chunk)
                         GLfloat torch = (GLfloat)GetPointlight(x, y - 1, z);
                         GLfloat sun = (GLfloat)GetSunlight(x, y - 1, z);
                         vec4 light_map = {torch, 0.f, sun, 0.f};
-                        BottomV(vertices, x, y, z, light_map);
+                        BottomV(vertices, x, y, z, light_map, block_type);
                     }
                 }
                 
@@ -134,7 +135,7 @@ void World::UpdateMesh(Chunk* chunk)
                         GLfloat torch = (GLfloat)GetPointlight(x, y + 1, z);
                         GLfloat sun = (GLfloat)GetSunlight(x, y + 1, z);
                         vec4 light_map = {torch, 0.f, sun, 0.f};
-                        TopV(vertices, x, y, z, light_map);
+                        TopV(vertices, x, y, z, light_map, block_type);
                     }
                 }
 
@@ -145,7 +146,7 @@ void World::UpdateMesh(Chunk* chunk)
                         GLfloat sun = (GLfloat)GetSunlight(x, y, z - 1);
                         sun -= ao;
                         vec4 light_map = {torch, 0.f, sun, 0.f};
-                        BackV(vertices, x, y, z, light_map);
+                        BackV(vertices, x, y, z, light_map, block_type);
                     }
                 }
 
@@ -156,7 +157,7 @@ void World::UpdateMesh(Chunk* chunk)
                         GLfloat sun = (GLfloat)GetSunlight(x, y, z + 1);
                         sun -= ao;
                         vec4 light_map = {torch, 0.f, sun, 0.f};
-                        FrontV(vertices, x, y, z, light_map);
+                        FrontV(vertices, x, y, z, light_map, block_type);
                     }
                 }
             }
@@ -207,8 +208,10 @@ void World::Generate()
                                 chunk->blocks[x][y][z] = AIR;
                             } else if (y > noise) {
                                 chunk->blocks[x][y][z] = AIR;
-                            } else {
+                            } else if (y > CHUNK_SIZE_Y /2) {
                                 chunk->blocks[x][y][z] = DIRT;
+                            } else {
+                                chunk->blocks[x][y][z] = SAND;
                             }
                         }
                     }

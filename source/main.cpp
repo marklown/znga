@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
     mat4x4 worldTransform;
     mat4x4_identity(worldTransform);
 
-    Texture grass = LoadTexture("/Users/markl/Dev/znga/textures/grass.png", DIFFUSE_MAP);
+    Texture grass = LoadTexture("/Users/markl/Dev/znga/textures/blocks.png", DIFFUSE_MAP);
 
     world.Generate();
 //    world.PlacePointlight(4*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 4*CHUNK_SIZE_Z-1);
@@ -214,6 +214,51 @@ int main(int argc, char* argv[])
     world.Update();
 
     SetUniform1f(uniformTimeOfDay, 1.0f);
+
+
+    Vertex cube[] = {
+        // front
+        {-0.5, -0.5, 0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0}, 
+        {0.5, -0.5, 0.5, 0, 0, 0, 0.5, 0, 1, 0, 0, 0},
+        {0.5, 0.5, 0.5, 0, 0, 0, 0.5, 0.5, 1, 0, 0, 0},
+        {-0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5, 1, 0, 0, 0},
+        // back
+        {-0.5, -0.5, -0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+        {0.5, -0.5, -0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+        {0.5, 0.5, -0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+        {-0.5, 0.5, -0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+    };
+
+    GLuint elements[] {
+        // front
+		0, 1, 2,
+		2, 3, 0,
+		// right
+		1, 5, 6,
+		6, 2, 1,
+		// back
+        5, 4, 7,
+        7, 6, 5,
+		// left
+		4, 0, 3,
+		3, 7, 4,
+		// bottom
+		4, 5, 1,
+		1, 0, 4,
+		// top
+		3, 2, 6,
+		6, 7, 3,
+    };
+
+    std::vector<Vertex> v;
+    std::vector<GLuint> e;
+    v.insert(v.end(), &cube[0], &cube[8]);
+    e.insert(e.end(), &elements[0], &elements[36]);
+    Mesh cube_mesh = CreateMesh(v, e);
+
+    TextureAtlas atlas("/Users/markl/Dev/znga/textures/test.png", "/Users/markl/Dev/znga/textures/test.json");
+    TextureInfo i1 = atlas.GetTextureInfo("GrassDirt.png");
+    TextureInfo i2 = atlas.GetTextureInfo("GrassTop.png");
 
     while (!glfwWindowShouldClose(window)) {
         float time_current = glfwGetTime();
@@ -231,7 +276,8 @@ int main(int argc, char* argv[])
 
         SetUniformMat4(uniformModel, (GLfloat*)worldTransform);
         glBindTexture(GL_TEXTURE_2D, grass.id);
-        world.Render();
+        //world.Render();
+        RenderMesh(cube_mesh);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR) {
