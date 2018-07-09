@@ -32,7 +32,7 @@ class TextureAtlas
 public:
     TextureAtlas(const std::string& texturePath, const std::string& infoPath);
     virtual ~TextureAtlas();
-    TextureInfo GetTextureInfo(const std::string& name);
+    TextureInfo GetTextureInfo(const std::string& name) const;
     Texture GetTexture() const { return m_texture; }
 private:
 

@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "Mesh.h"
-#include "Cube.h"
+#include "World.h"
 #include "Model.h"
 #include "Terrain.h"
 #include "linmath.h"
@@ -205,89 +205,15 @@ int main(int argc, char* argv[])
     mat4x4 worldTransform;
     mat4x4_identity(worldTransform);
 
-    Texture grass = LoadTexture("/Users/markl/Dev/znga/textures/blocks.png", DIFFUSE_MAP);
-
-//    world.Generate();
+    world.Init();
+    world.Generate();
 //    world.PlacePointlight(4*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 4*CHUNK_SIZE_Z-1);
 //    world.PlacePointlight(2*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 6*CHUNK_SIZE_Z-1);
 //    world.PlacePointlight(6*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 2*CHUNK_SIZE_Z-1);
-//    world.Update();
+    world.Update();
 
     SetUniform1f(uniformTimeOfDay, 1.0f);
 
-    TextureAtlas atlas("/Users/markl/Dev/znga/textures/test.png", "/Users/markl/Dev/znga/textures/test.json");
-    TextureInfo i = atlas.GetTextureInfo("GrassSide.png");
-
-    GLfloat front_pos[] = {
-        -0.5, -0.5, 0.5,
-        0.5, -0.5, 0.5,
-        0.5, 0.5, 0.5,
-        0.5, 0.5, 0.5,
-        -0.5, 0.5, 0.5,
-        -0.5, -0.5, 0.5
-    };
-
-    GLfloat front_uv[] = {
-        i.u[0], i.v[0],
-        i.u[1], i.v[1],
-        i.u[2], i.v[2],
-        i.u[2], i.v[2],
-        i.u[3], i.v[3],
-        i.u[0], i.v[0]
-    };
-
-    GLfloat front_lm[] = {14, 14, 14, 14};
-
-    std::vector<Vertex> vertices(6);
-    for (int i=0;i<6;i++) {
-        memcpy(vertices[i].position, &front_pos[i*3], 3 * sizeof(GLfloat));
-        memcpy(vertices[i].tex_coord, &front_uv[i*2], 2 * sizeof(GLfloat));
-        memcpy(vertices[i].light_map, front_lm, 4 * sizeof(GLfloat));
-    }
-
-    Mesh cube_mesh = CreateMesh(vertices);
-
-#if 0
-    Vertex cube[] = {
-        // front
-        {-0.5, -0.5, 0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0}, 
-        {0.5, -0.5, 0.5, 0, 0, 0, 0.5, 0, 1, 0, 0, 0},
-        {0.5, 0.5, 0.5, 0, 0, 0, 0.5, 0.5, 1, 0, 0, 0},
-        {-0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5, 1, 0, 0, 0},
-        // back
-        {-0.5, -0.5, -0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-        {0.5, -0.5, -0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-        {0.5, 0.5, -0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-        {-0.5, 0.5, -0.5, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-    };
-
-    GLuint elements[] {
-        // front
-		0, 1, 2,
-		2, 3, 0,
-		// right
-		1, 5, 6,
-		6, 2, 1,
-		// back
-        5, 4, 7,
-        7, 6, 5,
-		// left
-		4, 0, 3,
-		3, 7, 4,
-		// bottom
-		4, 5, 1,
-		1, 0, 4,
-		// top
-		3, 2, 6,
-		6, 7, 3,
-    };
-
-    std::vector<Vertex> v;
-    std::vector<GLuint> e;
-    v.insert(v.end(), &cube[0], &cube[8]);
-    e.insert(e.end(), &elements[0], &elements[36]);
-    Mesh cube_mesh = CreateMesh(v, e);
-#endif
 
     while (!glfwWindowShouldClose(window)) {
         float time_current = glfwGetTime();
@@ -304,10 +230,8 @@ int main(int argc, char* argv[])
         SetUniformMat4(uniformView, (GLfloat*)view);
 
         SetUniformMat4(uniformModel, (GLfloat*)worldTransform);
-        //glBindTexture(GL_TEXTURE_2D, grass.id);
-        //world.Render();
-        glBindTexture(GL_TEXTURE_2D, atlas.GetTexture().id);
-        RenderMesh(cube_mesh);
+
+        world.Render();
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR) {

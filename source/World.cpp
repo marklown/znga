@@ -1,10 +1,28 @@
-#include "Cube.h"
+#include "World.h"
 #include "noise.h"
 #include <random>
 #include <queue>
 
 namespace Znga {
 namespace Graphics {
+
+World::World()
+{
+}
+
+void World::Init()
+{
+    m_blockAtlas = new TextureAtlas("/Users/markl/Dev/znga/textures/test.png",
+                                    "/Users/markl/Dev/znga/textures/test.json");
+
+    m_dirtBlockInfo = new DirtBlockInfo(*m_blockAtlas);
+    m_grassBlockInfo = new GrassBlockInfo(*m_blockAtlas);
+    m_sandBlockInfo = new SandBlockInfo(*m_blockAtlas);
+
+    m_blockInfoMap[DIRT] = m_dirtBlockInfo;
+    m_blockInfoMap[GRASS] = m_grassBlockInfo;
+    m_blockInfoMap[SAND] = m_sandBlockInfo;
+}
 
 Chunk* World::GetChunk(int hash)
 {
@@ -82,6 +100,8 @@ void World::UpdateMesh(Chunk* chunk)
     std::vector<Vertex> vertices;
     vertices.reserve(36 * CHUNK_SIZE_X * CHUNK_SIZE_Y * CHUNK_SIZE_Z);
 
+    std::vector<FaceInfo> faces;
+
     const GLfloat ao = 4.0;
 
     for (int i = 0; i < CHUNK_SIZE_X; i++) {
@@ -97,68 +117,74 @@ void World::UpdateMesh(Chunk* chunk)
                     continue;
                 }
 
+                faces.clear();
+                faces.reserve(6);
+
                 if (x > 0) {
                     // Left neighbor
                     if (AIR == GetBlock(x - 1, y, z)) {
-                        GLfloat torch = (GLfloat)GetPointlight(x - 1, y, z);
-                        GLfloat sun = (GLfloat)GetSunlight(x - 1, y, z);
-                        sun -= ao;
-                        vec4 light_map = {torch, 0.f, sun, 0.f};
-                        LeftV(vertices, x, y, z, light_map, block_type);
+                        faces.emplace_back(LEFT, 
+                                           (GLfloat)GetPointlight(x-1,y,z),
+                                           (GLfloat)GetSunlight(x-1,y,z)-ao,
+                                           0 /*unused*/);
                     }
                 }
 
                 if (x < WORLD_SIZE_X * CHUNK_SIZE_X - 1) {
                     // Right neighbor
                     if (AIR == GetBlock(x + 1, y, z)) {
-                        GLfloat torch = (GLfloat)GetPointlight(x + 1, y, z);
-                        GLfloat sun = (GLfloat)GetSunlight(x + 1, y, z);
-                        sun -= ao;
-                        vec4 light_map = {torch, 0.f, sun, 0.f};
-                        RightV(vertices, x, y, z, light_map, block_type);
+                        faces.emplace_back(RIGHT, 
+                                           (GLfloat)GetPointlight(x+1,y,z),
+                                           (GLfloat)GetSunlight(x+1,y,z)-ao,
+                                           0 /*unused*/);
                     }
                 }
 
                 if (y > 0) {
                     // Bottom neighbor
                     if (AIR == GetBlock(x, y - 1, z)) {
-                        GLfloat torch = (GLfloat)GetPointlight(x, y - 1, z);
-                        GLfloat sun = (GLfloat)GetSunlight(x, y - 1, z);
-                        vec4 light_map = {torch, 0.f, sun, 0.f};
-                        BottomV(vertices, x, y, z, light_map, block_type);
+                        faces.emplace_back(BOTTOM, 
+                                           (GLfloat)GetPointlight(x,y-1,z),
+                                           (GLfloat)GetSunlight(x,y-1,z),
+                                           0 /*unused*/);
                     }
                 }
                 
                 if (y < WORLD_SIZE_Y * CHUNK_SIZE_Y - 1) {
                     // Top neighbor
                     if (AIR == GetBlock(x, y + 1, z)) {
-                        GLfloat torch = (GLfloat)GetPointlight(x, y + 1, z);
-                        GLfloat sun = (GLfloat)GetSunlight(x, y + 1, z);
-                        vec4 light_map = {torch, 0.f, sun, 0.f};
-                        TopV(vertices, x, y, z, light_map, block_type);
+                        faces.emplace_back(TOP, 
+                                           (GLfloat)GetPointlight(x,y+1,z),
+                                           (GLfloat)GetSunlight(x,y+1,z),
+                                           0 /*unused*/);
                     }
                 }
 
                 if (z > 0) {
                     // Back neighbor
                     if (AIR == GetBlock(x, y, z - 1)) {
-                        GLfloat torch = (GLfloat)GetPointlight(x, y, z - 1);
-                        GLfloat sun = (GLfloat)GetSunlight(x, y, z - 1);
-                        sun -= ao;
-                        vec4 light_map = {torch, 0.f, sun, 0.f};
-                        BackV(vertices, x, y, z, light_map, block_type);
+                        faces.emplace_back(BACK, 
+                                           (GLfloat)GetPointlight(x,y,z-1),
+                                           (GLfloat)GetSunlight(x,y,z-1)-ao,
+                                           0 /*unused*/);
                     }
                 }
 
                 if (z < WORLD_SIZE_Z * CHUNK_SIZE_Z - 1) {
                     // Front neighbor
                     if (AIR == GetBlock(x, y, z + 1)) {
-                        GLfloat torch = (GLfloat)GetPointlight(x, y, z + 1);
-                        GLfloat sun = (GLfloat)GetSunlight(x, y, z + 1);
-                        sun -= ao;
-                        vec4 light_map = {torch, 0.f, sun, 0.f};
-                        FrontV(vertices, x, y, z, light_map, block_type);
+                        faces.emplace_back(FRONT, 
+                                           (GLfloat)GetPointlight(x,y,z+1),
+                                           (GLfloat)GetSunlight(x,y,z+1)-ao,
+                                           0 /*unused*/);
                     }
+                }
+
+                auto it = m_blockInfoMap.find(block_type);
+                if (it != m_blockInfoMap.end()) {
+                    std::vector<Vertex> cube = MeshFactory::CreateBlockMesh(
+                        x, y, z, *it->second, faces);
+                    vertices.insert(vertices.end(), cube.begin(), cube.end());
                 }
             }
         }
@@ -191,7 +217,7 @@ void World::Generate()
                         double noise = 0;
                         for (int pass = 1; pass <= 1; pass++) {
                             double gain = 0.5;
-                            double freq = 0.0015 * pass;
+                            double freq = .003;//0.0015 * pass;
                             double lac = 2.0;
                             int oct = 16;
                             double n = fbm_simplex_2d(
@@ -208,7 +234,9 @@ void World::Generate()
                                 chunk->blocks[x][y][z] = AIR;
                             } else if (y > noise) {
                                 chunk->blocks[x][y][z] = AIR;
-                            } else if (y > CHUNK_SIZE_Y /2) {
+                            } else if (y > CHUNK_SIZE_Y-16) {
+                                chunk->blocks[x][y][z] = GRASS;
+                            } else if (y > CHUNK_SIZE_Y-28) {
                                 chunk->blocks[x][y][z] = DIRT;
                             } else {
                                 chunk->blocks[x][y][z] = SAND;
@@ -223,6 +251,7 @@ void World::Generate()
 
 void World::Render()
 {
+    glBindTexture(GL_TEXTURE_2D, m_blockAtlas->GetTexture().id);
     for (int i = 0; i < WORLD_SIZE_X; i++) {
         for (int j = 0; j < WORLD_SIZE_Y; j++) {
             for (int k = 0; k < WORLD_SIZE_Z; k++) {

@@ -141,14 +141,14 @@ TextureAtlas::TextureAtlas(const std::string& path, const std::string& infoPath)
                                             h = (GLfloat)v.get<double>();
                                         }
                                     }
-                                    info.u[0] = x / m_w;
-                                    info.v[0] = y / m_h;
-                                    info.u[1] = (x+w) / m_w;
-                                    info.v[1] = y / m_h;
-                                    info.u[2] = (x+w) / m_w;
-                                    info.v[2] = (y+h) / m_h;
-                                    info.u[3] = x / m_w;
-                                    info.v[3] = (y+h) / m_h;
+                                    info.u[0] = x/m_w;
+                                    info.v[0] = y/m_h;
+                                    info.u[1] = (x+w)/m_w;
+                                    info.v[1] = y/m_h;
+                                    info.u[2] = (x+w)/m_w;
+                                    info.v[2] = (y+h)/m_h;
+                                    info.u[3] = x/m_w;
+                                    info.v[3] = (y+h)/m_h;
                                     m_textureInfo[frame_name] = info;
                                 }
                             }
@@ -165,7 +165,7 @@ TextureAtlas::~TextureAtlas()
     // todo delete the underlying texture and invalidate the map
 }
 
-TextureInfo TextureAtlas::GetTextureInfo(const std::string& name)
+TextureInfo TextureAtlas::GetTextureInfo(const std::string& name) const
 {
     auto it = m_textureInfo.find(name);
     if (it != m_textureInfo.end()) {
