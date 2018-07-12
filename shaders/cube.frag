@@ -7,6 +7,11 @@ in vec4 light_map;
 
 out vec4 final_color;
 
+vec3 gamma(vec3 color)
+{
+    return pow(color, vec3(1.0/2.0));
+}
+
 void main()
 {
     //vec4 color = vec4(0, .5, .5, 1.0); 

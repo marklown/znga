@@ -2,6 +2,7 @@
 #include "noise.h"
 #include <random>
 #include <queue>
+#include <chrono>
 
 namespace Znga {
 namespace Graphics {
@@ -12,6 +13,8 @@ World::World()
 
 void World::Init()
 {
+    opensimplex_init(41716);
+
     m_blockAtlas = new TextureAtlas("/Users/markl/Dev/znga/textures/test.png",
                                     "/Users/markl/Dev/znga/textures/test.json");
 
@@ -193,57 +196,59 @@ void World::UpdateMesh(Chunk* chunk)
     chunk->mesh = CreateMesh(vertices);
 }
 
+void World::Generate(Chunk* chunk)
+{
+    memset(chunk->blocks, 0, sizeof(chunk->pointlight));
+    memset(chunk->sunlight, 0, sizeof(chunk->sunlight));
+    memset(chunk->pointlight, 0, sizeof(chunk->pointlight));
+
+    for (int x = 0; x < CHUNK_SIZE_X; x++) {
+        for (int z = 0; z < CHUNK_SIZE_Z; z++) {
+
+            double noise = 0;
+            for (int pass = 1; pass <= 1; pass++) {
+                double gain = 0.5;
+                double freq = .003;//0.0015 * pass;
+                double lac = 2.0;
+                int oct = 16;
+                double n = fbm_simplex_2d(
+                    (double)(chunk->world_pos[0] + x),
+                    (double)(chunk->world_pos[2] + z),
+                    gain, freq, lac, oct);
+                noise += n;
+            }
+            if (noise < -1) noise = -1;
+            else if (noise > 1) noise = 1;
+            noise = (noise + 1) / 2;
+            noise *= CHUNK_SIZE_Y;
+            for (int y = 0; y < CHUNK_SIZE_Y; y++) {
+                if (y == CHUNK_SIZE_Y - 1){
+                    chunk->blocks[x][y][z] = AIR;
+                } else if (y > noise) {
+                    chunk->blocks[x][y][z] = AIR;
+                } else if (y > CHUNK_SIZE_Y-16) {
+                    chunk->blocks[x][y][z] = GRASS;
+                } else if (y > CHUNK_SIZE_Y-28) {
+                    chunk->blocks[x][y][z] = DIRT;
+                } else {
+                    chunk->blocks[x][y][z] = SAND;
+                }
+            }
+        }
+    }
+    m_updateQueue.push(chunk);
+}
+
 void World::Generate()
 {
-    opensimplex_init(41716);
-
     for (int i = 0; i < WORLD_SIZE_X; i++) {
         for (int j = 0; j < WORLD_SIZE_Y; j++) {
             for (int k = 0; k < WORLD_SIZE_Z; k++) {
-
                 Chunk* chunk = AddChunkByIndex(i, j, k);
-
-                memset(chunk->blocks, 0, sizeof(chunk->pointlight));
-                memset(chunk->sunlight, 0, sizeof(chunk->sunlight));
-                memset(chunk->pointlight, 0, sizeof(chunk->pointlight));
-
                 chunk->world_pos[0] = i * CHUNK_SIZE_X;
                 chunk->world_pos[1] = j * CHUNK_SIZE_Y;
                 chunk->world_pos[2] = k * CHUNK_SIZE_Z;
-
-                for (int x = 0; x < CHUNK_SIZE_X; x++) {
-                    for (int z = 0; z < CHUNK_SIZE_Z; z++) {
-
-                        double noise = 0;
-                        for (int pass = 1; pass <= 1; pass++) {
-                            double gain = 0.5;
-                            double freq = .003;//0.0015 * pass;
-                            double lac = 2.0;
-                            int oct = 16;
-                            double n = fbm_simplex_2d(
-                                (double)(i * CHUNK_SIZE_X + x), (double)(k * CHUNK_SIZE_Z + z),
-                                gain, freq, lac, oct);
-                            noise += n;
-                        }
-                        if (noise < -1) noise = -1;
-                        else if (noise > 1) noise = 1;
-                        noise = (noise + 1) / 2;
-                        noise *= CHUNK_SIZE_Y;
-                        for (int y = 0; y < CHUNK_SIZE_Y; y++) {
-                            if (y == CHUNK_SIZE_Y - 1){
-                                chunk->blocks[x][y][z] = AIR;
-                            } else if (y > noise) {
-                                chunk->blocks[x][y][z] = AIR;
-                            } else if (y > CHUNK_SIZE_Y-16) {
-                                chunk->blocks[x][y][z] = GRASS;
-                            } else if (y > CHUNK_SIZE_Y-28) {
-                                chunk->blocks[x][y][z] = DIRT;
-                            } else {
-                                chunk->blocks[x][y][z] = SAND;
-                            }
-                        }
-                    }
-                }
+                m_genQueue.push(chunk);
             }
         }
     }
@@ -447,11 +452,11 @@ void World::PropogateSunlight(Chunk* chunk)
 
         if (y > 0) {
             // Bottom neighbor
-            if ((GetBlock(x, y - 1, z) < DIRT) &&
-                (GetSunlight(x, y - 1, z) + 2 <= light_level)) {
-                    // Sunlight propogates straight down with no attenuation
-                    SetSunlight(x, y - 1, z, light_level/* - 1*/);
+            if (GetBlock(x, y - 1, z) < DIRT) {
+                if (GetSunlight(x, y - 1, z) < 14) {
+                    SetSunlight(x, y - 1, z, 14);
                     queue.emplace(x, y - 1, z);
+                }
             }
         }
         
@@ -481,6 +486,24 @@ void World::PropogateSunlight(Chunk* chunk)
                     queue.emplace(x, y, z + 1);
             }
         }
+    }
+}
+
+void World::ProcessUpdateQueue()
+{
+    if (m_updateQueue.size() > 0) {
+        Chunk* chunk = m_updateQueue.front();
+        m_updateQueue.pop();
+        UpdateMesh(chunk);
+    }
+}
+
+void World::ProcessGenQueue()
+{
+    if (m_genQueue.size() > 0) {
+        Chunk* chunk = m_genQueue.front();
+        m_genQueue.pop();
+        Generate(chunk);
     }
 }
 

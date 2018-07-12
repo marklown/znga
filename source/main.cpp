@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <thread>
+#include <iostream>
 
 using namespace Znga::Graphics;
 
@@ -20,12 +22,12 @@ float time_delta = 0.0f;
 float time_last = 0.0f;
 
 // camera system
-vec3 camera_pos = {CHUNK_SIZE_X/2.0f, CHUNK_SIZE_Y+10.0f, CHUNK_SIZE_Z+20.0f};
-vec3 camera_front = {0.0f, 0.0f, -1.0f};
+vec3 camera_pos = {CHUNK_SIZE_X/2.0f, CHUNK_SIZE_Y+5, CHUNK_SIZE_Z+20.0f};
+vec3 camera_front = {0.5f, 0.0f, 0.5f};
 vec3 camera_up = {0.0f, 1.0f, 0.0f};
 float camera_last_x = 1920.0f / 2.0f;
 float camera_last_y = 1080.0f / 2.0f;
-float camera_yaw = -90.0f;
+float camera_yaw = 45.0f;
 float camera_pitch = 0.0f;
 bool first_mouse = true;
 bool camera_free = true;
@@ -210,7 +212,7 @@ int main(int argc, char* argv[])
 //    world.PlacePointlight(4*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 4*CHUNK_SIZE_Z-1);
 //    world.PlacePointlight(2*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 6*CHUNK_SIZE_Z-1);
 //    world.PlacePointlight(6*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 2*CHUNK_SIZE_Z-1);
-    world.Update();
+//    world.Update();
 
     SetUniform1f(uniformTimeOfDay, 1.0f);
 
@@ -231,7 +233,23 @@ int main(int argc, char* argv[])
 
         SetUniformMat4(uniformModel, (GLfloat*)worldTransform);
 
+        auto start = std::chrono::steady_clock::now();
+        world.ProcessGenQueue();
+        auto end = std::chrono::steady_clock::now();
+        auto elapsed = end - start;
+        std::cout << "process gen queue  " << std::chrono::duration<double, std::milli>(elapsed).count() << '\n';
+
+        start = std::chrono::steady_clock::now();
+        world.ProcessUpdateQueue();
+        end = std::chrono::steady_clock::now();
+        elapsed = end - start;
+        std::cout << "process update queue  " << std::chrono::duration<double, std::milli>(elapsed).count() << '\n';
+
+        start = std::chrono::steady_clock::now();
         world.Render();
+        end = std::chrono::steady_clock::now();
+        elapsed = end - start;
+        std::cout << "render  " << std::chrono::duration<double, std::milli>(elapsed).count() << '\n';
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR) {
@@ -241,7 +259,6 @@ int main(int argc, char* argv[])
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
 
     glfwDestroyWindow(window);
 

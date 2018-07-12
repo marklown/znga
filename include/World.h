@@ -7,6 +7,9 @@
 #include <cassert>
 #include <map>
 #include <array>
+#include <queue>
+#include <thread>
+#include <mutex>
 
 namespace Znga {
 namespace Graphics {
@@ -39,6 +42,7 @@ public:
     void   Generate();
     void   Update();
     void   Render();
+    void   Generate(Chunk* chunk);
 
     Chunk* GetChunkByPos(int x, int y, int z);
     Chunk* AddChunkByPos(int x, int y, int z);
@@ -56,6 +60,9 @@ public:
     void  SetSunlight(int x, int y, int z, Light value);
     void  PropogateSunlight(Chunk* chunk);
     
+    void ProcessUpdateQueue();
+    void ProcessGenQueue();
+
 private:
 
     int HashFromPos(int x, int y, int z);
@@ -71,6 +78,9 @@ private:
     GrassBlockInfo* m_grassBlockInfo;
     DirtBlockInfo* m_dirtBlockInfo;
     SandBlockInfo* m_sandBlockInfo;
+
+    std::queue<Chunk*> m_genQueue;
+    std::queue<Chunk*> m_updateQueue;
 };
 
 struct LightNode
