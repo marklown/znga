@@ -233,23 +233,9 @@ int main(int argc, char* argv[])
 
         SetUniformMat4(uniformModel, (GLfloat*)worldTransform);
 
-        auto start = std::chrono::steady_clock::now();
         world.ProcessGenQueue();
-        auto end = std::chrono::steady_clock::now();
-        auto elapsed = end - start;
-        std::cout << "process gen queue  " << std::chrono::duration<double, std::milli>(elapsed).count() << '\n';
-
-        start = std::chrono::steady_clock::now();
         world.ProcessUpdateQueue();
-        end = std::chrono::steady_clock::now();
-        elapsed = end - start;
-        std::cout << "process update queue  " << std::chrono::duration<double, std::milli>(elapsed).count() << '\n';
-
-        start = std::chrono::steady_clock::now();
         world.Render();
-        end = std::chrono::steady_clock::now();
-        elapsed = end - start;
-        std::cout << "render  " << std::chrono::duration<double, std::milli>(elapsed).count() << '\n';
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR) {

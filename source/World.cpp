@@ -73,6 +73,7 @@ Chunk* World::AddChunkByIndex(int i, int j, int k)
 
 int World::HashFromPos(int x, int y, int z)
 {
+    if (x < 0 || y < 0 || z < 0) return -1;
     int i = x / CHUNK_SIZE_X;
     int j = y / CHUNK_SIZE_Y;
     int k = z / CHUNK_SIZE_Z;
@@ -87,7 +88,7 @@ int World::HashFromIndex(int i, int j, int k)
 Block World::GetBlock(int x, int y, int z)
 {
     Chunk* chunk = GetChunkByPos(x, y, z);
-    if (!chunk) return AIR;
+    if (!chunk) return ERR;
     int i = x  % CHUNK_SIZE_X;
     int j = y  % CHUNK_SIZE_Y;
     int k = z  % CHUNK_SIZE_Z;
@@ -123,64 +124,52 @@ void World::UpdateMesh(Chunk* chunk)
                 faces.clear();
                 faces.reserve(6);
 
-                if (x > 0) {
-                    // Left neighbor
-                    if (AIR == GetBlock(x - 1, y, z)) {
-                        faces.emplace_back(LEFT, 
-                                           (GLfloat)GetPointlight(x-1,y,z),
-                                           (GLfloat)GetSunlight(x-1,y,z)-ao,
-                                           0 /*unused*/);
-                    }
+                // Left neighbor
+                if (AIR == GetBlock(x - 1, y, z)) {
+                    faces.emplace_back(LEFT, 
+                                        (GLfloat)GetPointlight(x-1,y,z),
+                                        (GLfloat)GetSunlight(x-1,y,z)-ao,
+                                        0 /*unused*/);
                 }
 
-                if (x < WORLD_SIZE_X * CHUNK_SIZE_X - 1) {
-                    // Right neighbor
-                    if (AIR == GetBlock(x + 1, y, z)) {
-                        faces.emplace_back(RIGHT, 
-                                           (GLfloat)GetPointlight(x+1,y,z),
-                                           (GLfloat)GetSunlight(x+1,y,z)-ao,
-                                           0 /*unused*/);
-                    }
+                // Right neighbor
+                if (AIR == GetBlock(x + 1, y, z)) {
+                    faces.emplace_back(RIGHT, 
+                                        (GLfloat)GetPointlight(x+1,y,z),
+                                        (GLfloat)GetSunlight(x+1,y,z)-ao,
+                                        0 /*unused*/);
                 }
 
-                if (y > 0) {
-                    // Bottom neighbor
-                    if (AIR == GetBlock(x, y - 1, z)) {
-                        faces.emplace_back(BOTTOM, 
-                                           (GLfloat)GetPointlight(x,y-1,z),
-                                           (GLfloat)GetSunlight(x,y-1,z),
-                                           0 /*unused*/);
-                    }
+                // Bottom neighbor
+                if (AIR == GetBlock(x, y - 1, z)) {
+                    faces.emplace_back(BOTTOM, 
+                                        (GLfloat)GetPointlight(x,y-1,z),
+                                        (GLfloat)GetSunlight(x,y-1,z),
+                                        0 /*unused*/);
                 }
-                
-                if (y < WORLD_SIZE_Y * CHUNK_SIZE_Y - 1) {
-                    // Top neighbor
-                    if (AIR == GetBlock(x, y + 1, z)) {
-                        faces.emplace_back(TOP, 
-                                           (GLfloat)GetPointlight(x,y+1,z),
-                                           (GLfloat)GetSunlight(x,y+1,z),
-                                           0 /*unused*/);
-                    }
+            
+                // Top neighbor
+                if (AIR == GetBlock(x, y + 1, z)) {
+                    faces.emplace_back(TOP, 
+                                        (GLfloat)GetPointlight(x,y+1,z),
+                                        (GLfloat)GetSunlight(x,y+1,z),
+                                        0 /*unused*/);
                 }
 
-                if (z > 0) {
-                    // Back neighbor
-                    if (AIR == GetBlock(x, y, z - 1)) {
-                        faces.emplace_back(BACK, 
-                                           (GLfloat)GetPointlight(x,y,z-1),
-                                           (GLfloat)GetSunlight(x,y,z-1)-ao,
-                                           0 /*unused*/);
-                    }
+                // Back neighbor
+                if (AIR == GetBlock(x, y, z - 1)) {
+                    faces.emplace_back(BACK, 
+                                        (GLfloat)GetPointlight(x,y,z-1),
+                                        (GLfloat)GetSunlight(x,y,z-1)-ao,
+                                        0 /*unused*/);
                 }
 
-                if (z < WORLD_SIZE_Z * CHUNK_SIZE_Z - 1) {
-                    // Front neighbor
-                    if (AIR == GetBlock(x, y, z + 1)) {
-                        faces.emplace_back(FRONT, 
-                                           (GLfloat)GetPointlight(x,y,z+1),
-                                           (GLfloat)GetSunlight(x,y,z+1)-ao,
-                                           0 /*unused*/);
-                    }
+                // Front neighbor
+                if (AIR == GetBlock(x, y, z + 1)) {
+                    faces.emplace_back(FRONT, 
+                                        (GLfloat)GetPointlight(x,y,z+1),
+                                        (GLfloat)GetSunlight(x,y,z+1)-ao,
+                                        0 /*unused*/);
                 }
 
                 auto it = m_blockInfoMap.find(block_type);
@@ -194,6 +183,7 @@ void World::UpdateMesh(Chunk* chunk)
     }
 
     chunk->mesh = CreateMesh(vertices);
+    chunk->has_mesh = true;
 }
 
 void World::Generate(Chunk* chunk)
@@ -236,6 +226,7 @@ void World::Generate(Chunk* chunk)
             }
         }
     }
+    chunk->has_mesh = false;
     m_updateQueue.push(chunk);
 }
 
@@ -261,7 +252,7 @@ void World::Render()
         for (int j = 0; j < WORLD_SIZE_Y; j++) {
             for (int k = 0; k < WORLD_SIZE_Z; k++) {
                 Chunk* chunk = GetChunkByIndex(i, j, k);
-                if (chunk) {
+                if (chunk && chunk->has_mesh) {
                     RenderMesh(chunk->mesh);
                 }
             }

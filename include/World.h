@@ -20,9 +20,9 @@ const int CHUNK_SIZE_X = 32;
 const int CHUNK_SIZE_Y = 32;
 const int CHUNK_SIZE_Z = 32;
 
-const int WORLD_SIZE_X = 8;
+const int WORLD_SIZE_X = 4;
 const int WORLD_SIZE_Y = 1;
-const int WORLD_SIZE_Z = 8;
+const int WORLD_SIZE_Z = 4;
 
 struct Chunk
 {
@@ -31,6 +31,7 @@ struct Chunk
     Light sunlight[CHUNK_SIZE_X][CHUNK_SIZE_Y][CHUNK_SIZE_Z];
     int world_pos[3] = {0, 0, 0};
     Mesh mesh;
+    bool has_mesh = false;
 };
 
 class World

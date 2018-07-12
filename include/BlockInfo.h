@@ -17,6 +17,8 @@ const Block GRASS = 2;
 const Block SAND = 3;
 const Block STONE = 4;
 
+const Block ERR = 254;
+
 
 enum Face 
 {
