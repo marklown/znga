@@ -16,13 +16,13 @@ namespace Graphics {
 
 using Light = unsigned short;
 
-const int CHUNK_SIZE_X = 32;
-const int CHUNK_SIZE_Y = 32;
-const int CHUNK_SIZE_Z = 32;
+const int CHUNK_SIZE_X = 128;
+const int CHUNK_SIZE_Y = 128;
+const int CHUNK_SIZE_Z = 128;
 
-const int WORLD_SIZE_X = 4;
+const int WORLD_SIZE_X = 1;
 const int WORLD_SIZE_Y = 1;
-const int WORLD_SIZE_Z = 4;
+const int WORLD_SIZE_Z = 1;
 
 struct Chunk
 {

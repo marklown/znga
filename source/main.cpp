@@ -187,7 +187,7 @@ int main(int argc, char* argv[])
     mat4x4 projection, view;
     mat4x4_identity(projection);
     mat4x4_identity(view);
-    mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 100000.0f);
+    mat4x4_perspective(projection, 45.0f * 3.14f / 180.0f, (float)width/(float)height, 0.1f, 10000.0f);
 
     Shader shader = LoadShader(
         "/Users/markl/Dev/znga/shaders/cube.vert",
@@ -209,9 +209,7 @@ int main(int argc, char* argv[])
 
     world.Init();
     world.Generate();
-//    world.PlacePointlight(4*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 4*CHUNK_SIZE_Z-1);
-//    world.PlacePointlight(2*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 6*CHUNK_SIZE_Z-1);
-//    world.PlacePointlight(6*CHUNK_SIZE_X-1, CHUNK_SIZE_Y-1, 2*CHUNK_SIZE_Z-1);
+    world.PlacePointlight(CHUNK_SIZE_X/4, CHUNK_SIZE_Y-4, CHUNK_SIZE_Z/2);
 //    world.Update();
 
     SetUniform1f(uniformTimeOfDay, 1.0f);
