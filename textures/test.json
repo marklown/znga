@@ -35,14 +35,23 @@
 	"spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
 	"sourceSize": {"w":16,"h":16},
 	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "stone.png",
+	"frame": {"x":64,"y":0,"w":16,"h":16},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+	"sourceSize": {"w":16,"h":16},
+	"pivot": {"x":0.5,"y":0.5}
 }],
 "meta": {
 	"app": "https://www.codeandweb.com/texturepacker",
 	"version": "1.0",
 	"image": "test.png",
 	"format": "RGBA8888",
-	"size": {"w":64,"h":16},
+	"size": {"w":80,"h":16},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:96ad1d94333b9c77b51b965c72597b28:7559f6bfc5dbb47cefad5a8186126f8d:02ab132358d6d8b512e80119463a8329$"
+	"smartupdate": "$TexturePacker:SmartUpdate:291b639dbb3ab75e6ad87c50f8c63ae2:71d49769eb3b508ae364cefeeed38ba2:02ab132358d6d8b512e80119463a8329$"
 }
 }

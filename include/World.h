@@ -4,6 +4,7 @@
 
 #include "Mesh.h"
 #include "BlockInfo.h"
+#include "Collision.h"
 #include <cassert>
 #include <map>
 #include <array>
@@ -64,6 +65,8 @@ public:
     void ProcessUpdateQueue();
     void ProcessGenQueue();
 
+    bool Collides(const Znga::Physics::AABB& other);
+
 private:
 
     int HashFromPos(int x, int y, int z);
@@ -79,6 +82,7 @@ private:
     GrassBlockInfo* m_grassBlockInfo;
     DirtBlockInfo* m_dirtBlockInfo;
     SandBlockInfo* m_sandBlockInfo;
+    StoneBlockInfo* m_stoneBlockInfo;
 
     std::queue<Chunk*> m_genQueue;
     std::queue<Chunk*> m_updateQueue;

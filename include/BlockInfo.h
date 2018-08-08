@@ -126,6 +126,26 @@ struct SandBlockInfo : public BlockInfo
     }
 };
 
+struct StoneBlockInfo : public BlockInfo 
+{
+    StoneBlockInfo(const TextureAtlas& atlas)
+    {
+        type = STONE;
+        TextureInfo info = atlas.GetTextureInfo("stone.png");
+        front_uv[0] = info.u[0]; front_uv[1] = info.v[0];
+        front_uv[2] = info.u[1]; front_uv[3] = info.v[1];
+        front_uv[4] = info.u[2]; front_uv[5] = info.v[2];
+        front_uv[6] = info.u[2]; front_uv[7] = info.v[2];
+        front_uv[8] = info.u[3]; front_uv[9] = info.v[3];
+        front_uv[10] = info.u[0]; front_uv[11] = info.v[0];
+        memcpy(right_uv, front_uv, 12 * sizeof(GLfloat));
+        memcpy(back_uv, front_uv, 12 * sizeof(GLfloat));
+        memcpy(left_uv, front_uv, 12 * sizeof(GLfloat));
+        memcpy(top_uv, front_uv, 12 * sizeof(GLfloat));
+        memcpy(bottom_uv, front_uv, 12 * sizeof(GLfloat));
+    }
+};
+
 struct MeshFactory
 {
     static std::vector<Vertex> CreateBlockMesh(int x, int y, int z,

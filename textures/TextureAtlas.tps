@@ -185,6 +185,7 @@
             <key type="filename">GrassSide.png</key>
             <key type="filename">GrassTop.png</key>
             <key type="filename">Quicksoil.png</key>
+            <key type="filename">../../../Downloads/Xenocontendi_6/assets/minecraft/textures/blocks/stone.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -204,6 +205,7 @@
             <filename>GrassSide.png</filename>
             <filename>GrassTop.png</filename>
             <filename>Quicksoil.png</filename>
+            <filename>../../../Downloads/Xenocontendi_6/assets/minecraft/textures/blocks/stone.png</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

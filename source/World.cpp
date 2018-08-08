@@ -22,10 +22,12 @@ void World::Init()
     m_dirtBlockInfo = new DirtBlockInfo(*m_blockAtlas);
     m_grassBlockInfo = new GrassBlockInfo(*m_blockAtlas);
     m_sandBlockInfo = new SandBlockInfo(*m_blockAtlas);
+    m_stoneBlockInfo = new StoneBlockInfo(*m_blockAtlas);
 
     m_blockInfoMap[DIRT] = m_dirtBlockInfo;
     m_blockInfoMap[GRASS] = m_grassBlockInfo;
     m_blockInfoMap[SAND] = m_sandBlockInfo;
+    m_blockInfoMap[STONE] = m_stoneBlockInfo;
 }
 
 Chunk* World::GetChunk(int hash)
@@ -90,7 +92,7 @@ int World::HashFromIndex(int i, int j, int k)
 Block World::GetBlock(int x, int y, int z)
 {
     Chunk* chunk = GetChunkByPos(x, y, z);
-    if (!chunk) return ERR;
+    if (!chunk) return AIR;
     int i = x % CHUNK_SIZE_X;
     int j = y % CHUNK_SIZE_Y;
     int k = z % CHUNK_SIZE_Z;
@@ -109,7 +111,7 @@ void World::UpdateMesh(Chunk* chunk)
     std::vector<FaceInfo> faces;
     std::vector<Vertex> cube;
 
-    const GLfloat ao = 3.0;
+    const GLfloat ao = 1.8;
 
     for (int i = 0; i < CHUNK_SIZE_X; i++) {
         for (int j = 0; j < CHUNK_SIZE_Y; j++) {
@@ -141,10 +143,18 @@ void World::UpdateMesh(Chunk* chunk)
                 if (AIR == GetBlock(x, y-1, z)) {
                     faces.emplace_back(BOTTOM,(GLfloat)GetPointlight(x,y-1,z), (GLfloat)GetSunlight(x,y-1,z), 0);
                 }
+
+                if (GetBlock(x,y+6,z) == AIR) {
+                    block_type = DIRT;
+                }
             
                 // Top neighbor
                 if (AIR == GetBlock(x, y+1, z)) {
                     faces.emplace_back(TOP, (GLfloat)GetPointlight(x,y+1,z), (GLfloat)GetSunlight(x,y+1,z), 0);
+                    if (block_type == DIRT && GetSunlight(x,y+1,z) > 6) {
+                        block_type = GRASS;
+                    }
+                    chunk->blocks[i][j][k] = block_type;
                 }
 
                 // Back neighbor
@@ -175,85 +185,31 @@ void World::Generate(Chunk* chunk)
     memset(chunk->blocks, 0, sizeof(chunk->pointlight));
     memset(chunk->sunlight, 0, sizeof(chunk->sunlight));
     memset(chunk->pointlight, 0, sizeof(chunk->pointlight));
-#if 1 
     float caves, center_falloff, plateau_falloff, density;
-
     for (int i = 0; i < CHUNK_SIZE_X; i++) {
         for (int j = 0; j < CHUNK_SIZE_Y; j++) {
             for (int k = 0; k < CHUNK_SIZE_Z; k++) {
                 float xf = (float)(i+chunk->world_pos[0])/(float)(CHUNK_SIZE_X*WORLD_SIZE_X);
                 float yf = (float)(j+chunk->world_pos[1])/(float)(CHUNK_SIZE_Y*WORLD_SIZE_Y);
                 float zf = (float)(k+chunk->world_pos[2])/(float)(CHUNK_SIZE_Z*WORLD_SIZE_Z);
-                if(yf <= 0.8){
+                if (yf <= 0.8) {
                     plateau_falloff = 1.0;
-                }
-                else if(0.8 < yf && yf < 0.9){
+                } else if (0.8 < yf && yf < 0.9){
                     plateau_falloff = 1.0-(yf-0.8)*10.0;
-                }
-                else{
+                } else {
                     plateau_falloff = 0.0;
                 }
-                
-                center_falloff = 0.1/(
-                    pow((xf-0.5)*1.5, 2) +
-                    pow((yf-1.0)*0.8, 2) +
-                    pow((zf-0.5)*1.5, 2)
-                );
+                center_falloff = 0.1 / (pow((xf-0.5)*1.5, 2) + pow((yf-1.0)*0.8, 2) + pow((zf-0.5)*1.5, 2));
                 caves = pow(simplex_noise(1, xf*5, yf*5, zf*5), 3);
-                density = (
-                    simplex_noise(5, xf, yf*0.5, zf) *
-                    center_falloff *
-                    plateau_falloff
-                );
-                density *= pow(
-                    noise((xf+1)*3.0, (yf+1)*3.0, (zf+1)*3.0)+0.4, 1.8
-                );
-                if(caves<0.5){
+                density = simplex_noise(5, xf, yf*0.5, zf) * center_falloff * plateau_falloff;
+                density *= pow(noise((xf+1)*3.0, (yf+1)*3.0, (zf+1)*3.0)+0.4, 1.8);
+                if (caves < 0.5) {
                     density = 0;
                 }
-
-                chunk->blocks[i][j][k] = density > 3.1 ? DIRT : AIR;
-
+                chunk->blocks[i][j][k] = density > 3.0 ? STONE : AIR;
             }
         }
     }
-#endif
-#if 0 
-    for (int x = 0; x < CHUNK_SIZE_X; x++) {
-        for (int z = 0; z < CHUNK_SIZE_Z; z++) {
-
-            double noise = 0;
-            for (int pass = 1; pass <= 1; pass++) {
-                double gain = 0.5;
-                double freq = 0.0005;//.003;//0.0015 * pass;
-                double lac = 2.0;
-                int oct = 16;
-                double n = fbm_simplex_2d(
-                    (double)(chunk->world_pos[0] + x),
-                    (double)(chunk->world_pos[2] + z),
-                    gain, freq, lac, oct);
-                noise += n;
-            }
-            if (noise < -1) noise = -1;
-            //else if (noise > 1) noise = 1;
-            noise = (noise + 1) / 2;
-            noise *= CHUNK_SIZE_Y;
-            for (int y = 0; y < CHUNK_SIZE_Y; y++) {
-                if (y == CHUNK_SIZE_Y - 1){
-                    chunk->blocks[x][y][z] = AIR;
-                } else if (y > noise) {
-                    chunk->blocks[x][y][z] = AIR;
-                } else if (y > CHUNK_SIZE_Y-16) {
-                    chunk->blocks[x][y][z] = GRASS;
-                } else if (y > CHUNK_SIZE_Y-28) {
-                    chunk->blocks[x][y][z] = DIRT;
-                } else {
-                    chunk->blocks[x][y][z] = SAND;
-                }
-            }
-        }
-    }
-#endif
     chunk->has_mesh = false;
     m_updateQueue.push(chunk);
 }
@@ -419,6 +375,7 @@ void World::SetSunlight(int x, int y, int z, Light value)
     int i = x % CHUNK_SIZE_X;
     int j = y % CHUNK_SIZE_Y;
     int k = z % CHUNK_SIZE_Z;
+    if (value < 4) value = 4;
     chunk->sunlight[i][j][k] = value;
 }
 
@@ -472,7 +429,7 @@ void World::PropogateSunlight(Chunk* chunk)
         if (y > 0) {
             // Bottom neighbor
             if (GetBlock(x, y - 1, z) < DIRT) {
-                if (GetSunlight(x, y - 1, z) + 2 < light_level) {
+                if (GetSunlight(x, y - 1, z) + 2 <= light_level) {
                     SetSunlight(x, y - 1, z, light_level);
                     queue.emplace(x, y - 1, z);
                 }
@@ -526,6 +483,27 @@ void World::ProcessGenQueue()
     }
 }
 
+bool World::Collides(const Znga::Physics::AABB& other)
+{
+    Chunk* c = GetChunkByPos(other.xmin, other.ymin, other.zmin);
+    if (!c) {
+        return false;
+    }
+    for (int i = 0; i<CHUNK_SIZE_X; i++) {
+        for (int j = 0;j<CHUNK_SIZE_Y; j++) {
+            for (int k = 0;k<CHUNK_SIZE_Z; k++) {
+                int x = c->world_pos[0] + i;
+                int y = c->world_pos[1] + j;
+                int z = c->world_pos[2] + k;
+                Znga::Physics::AABB b = {x-.5f, x+.5f, y-.5f, y+.5f, z-.5f, z+.5f};
+                if (c->blocks[i][j][k] > AIR && b.Collides(other)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
 
 }
 }
